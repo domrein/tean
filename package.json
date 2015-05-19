@@ -1,0 +1,30 @@
+{
+  "name": "tean",
+  "version": "1.0.0",
+  "description": "Strict object validation and normalization",
+  "main": "src/index.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "mocha test/test.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/domrein/tean.git"
+  },
+  "keywords": [
+    "validation",
+    "normalization",
+    "security"
+  ],
+  "author": "Paul Milham",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/domrein/tean/issues"
+  },
+  "homepage": "https://github.com/domrein/tean",
+  "dependencies": {
+    "async": "^0.9.2"
+  }
+}
