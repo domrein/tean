@@ -4,7 +4,7 @@ let _assert = require("assert");
 
 let _tean = require("../src/index.js");
 
-describe("validate", function() {
+describe("tean", function() {
   describe("#addBaseTypes()", function() {
     it("should not fail when adding base types", function() {
       _tean.addBaseTypes();
