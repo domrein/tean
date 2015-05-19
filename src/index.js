@@ -8,21 +8,28 @@
 
 let _async = require("async");
 
+exports.logRequests = false;
+exports.logFailures = false;
+
 // express middleware
-exports.params = function(paramMap) {
+exports.expressRequest = function(paramMap) {
   return function(req, res, next) {
     // set default params
-    let params = req.body.params = req.body.params || req.query || {};
+    let params = req.body = || {};
     // TODO: replace console.log
-    console.log(`params: ${JSON.stringify(params)}`);
+    if (exports.logRequests) {
+      console.log(`params: ${JSON.stringify(params)}`);
+    }
     exports.object(paramMap, params, function(validationPassed) {
       if (validationPassed) {
         next();
       }
       else {
-        console.log(`Invalid parameters supplied for ${req.route.path}`);
-        console.log(`Expecting: ${JSON.stringify(paramMap)}`);
-        console.log(`Received: ${JSON.stringify(params)}`);
+        if (exports.logFailures) {
+          console.log(`Invalid parameters supplied for ${req.route.path}`);
+          console.log(`Expecting: ${JSON.stringify(paramMap)}`);
+          console.log(`Received: ${JSON.stringify(params)}`);
+        }
         res.send(400);
       }
     });
