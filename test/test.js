@@ -2,20 +2,20 @@
 
 let _assert = require("assert");
 
-let _validate = require("../common/validate.js");
+let _tean = require("../src/index.js");
 
 describe("validate", function() {
   describe("#addBaseTypes()", function() {
     it("should not fail when adding base types", function() {
-      _validate.addBaseTypes();
+      _tean.addBaseTypes();
     });
   });
 
   describe("#addType", function() {
     it("should allow adding a custom type", function() {
       // accepts breakfast strings and ids and converts strings to ids
-      _validate.addType("breakfastUid", function(value, args, callback) {
-        _validate.object("int(0)", value, function(validationPassed) {
+      _tean.addType("breakfastUid", function(value, args, callback) {
+        _tean.object("int(0)", value, function(validationPassed) {
           if (validationPassed) {
             callback(true);
           }
@@ -41,11 +41,11 @@ describe("validate", function() {
 
   describe("#extendType()", function() {
     it("should allow extending of a base type", function() {
-      _validate.extendType("int", "tasteIndex", [0, 5]);
-      _validate.object("tasteIndex", 2, function(validationPassed) {
+      _tean.extendType("int", "tasteIndex", [0, 5]);
+      _tean.object("tasteIndex", 2, function(validationPassed) {
         _assert.strictEqual(true, validationPassed);
       });
-      _validate.object("tasteIndex", 300, function(validationPassed) {
+      _tean.object("tasteIndex", 300, function(validationPassed) {
         _assert.strictEqual(false, validationPassed);
       });
     });
@@ -90,7 +90,7 @@ describe("validate", function() {
         testValues = validValues;
       }
       testValues.forEach(function(testValue) {
-        _validate.object(type, testValue, function(validationPassed) {
+        _tean.object(type, testValue, function(validationPassed) {
           _assert.strictEqual(expectedResult, validationPassed, `value (${testValue}) should return ${expectedResult} for type (${type})`);
         });
       });
@@ -104,10 +104,10 @@ describe("validate", function() {
       testType("bool", validBools, true);
     });
     it("should allow default values for bool", function() {
-      _validate.object("bool?true", undefined, function(validationPassed) {
+      _tean.object("bool?true", undefined, function(validationPassed) {
         _assert.strictEqual(true, validationPassed);
       });
-      _validate.object("bool?false", undefined, function(validationPassed) {
+      _tean.object("bool?false", undefined, function(validationPassed) {
         _assert.strictEqual(true, validationPassed);
       });
     });
@@ -120,7 +120,7 @@ describe("validate", function() {
       testType("email", validEmails, true);
     });
     it("should allow default values for email", function() {
-      _validate.object("email?bacon@breakfast.com", undefined, function(validationPassed) {
+      _tean.object("email?bacon@breakfast.com", undefined, function(validationPassed) {
         _assert.strictEqual(true, validationPassed);
       });
     });
@@ -133,24 +133,24 @@ describe("validate", function() {
       testType("int", validInts, true);
     });
     it("should respect arguments for int", function() {
-      _validate.object("int(0)", 0, function(validationPassed) {
+      _tean.object("int(0)", 0, function(validationPassed) {
         _assert.strictEqual(true, validationPassed);
       });
-      _validate.object("int(0)", 10, function(validationPassed) {
+      _tean.object("int(0)", 10, function(validationPassed) {
         _assert.strictEqual(true, validationPassed);
       });
-      _validate.object("int(0,5)", 3, function(validationPassed) {
+      _tean.object("int(0,5)", 3, function(validationPassed) {
         _assert.strictEqual(true, validationPassed);
       });
-      _validate.object("int(0,5)", 6, function(validationPassed) {
+      _tean.object("int(0,5)", 6, function(validationPassed) {
         _assert.strictEqual(false, validationPassed);
       });
-      _validate.object("int(0,5)", -1, function(validationPassed) {
+      _tean.object("int(0,5)", -1, function(validationPassed) {
         _assert.strictEqual(false, validationPassed);
       });
     });
     it("should allow default values for int", function() {
-      _validate.object("int?1", undefined, function(validationPassed) {
+      _tean.object("int?1", undefined, function(validationPassed) {
         _assert.strictEqual(true, validationPassed);
       });
     });
@@ -163,7 +163,7 @@ describe("validate", function() {
       testType("json", validJsons, true);
     });
     it("should allow default values for json", function() {
-      _validate.object("json?{}", undefined, function(validationPassed) {
+      _tean.object("json?{}", undefined, function(validationPassed) {
         _assert.strictEqual(true, validationPassed);
       });
     });
@@ -176,7 +176,7 @@ describe("validate", function() {
       testType("number", validNumbers, true);
     });
     it("should allow default values for number", function() {
-      _validate.object("number?9", undefined, function(validationPassed) {
+      _tean.object("number?9", undefined, function(validationPassed) {
         _assert.strictEqual(true, validationPassed);
       });
     });
@@ -189,30 +189,30 @@ describe("validate", function() {
       testType("string", validStrings, true);
     });
     it("should respect arguments for string", function() {
-      _validate.object("string(bacon,pancakes)", "bacon", function(validationPassed) {
+      _tean.object("string(bacon,pancakes)", "bacon", function(validationPassed) {
         _assert.strictEqual(true, validationPassed);
       });
-      _validate.object("string(bacon,pancakes)", "pancakes", function(validationPassed) {
+      _tean.object("string(bacon,pancakes)", "pancakes", function(validationPassed) {
         _assert.strictEqual(true, validationPassed);
       });
-      _validate.object("string(bacon,pancakes)", "waffles", function(validationPassed) { // no waffles! :*(
+      _tean.object("string(bacon,pancakes)", "waffles", function(validationPassed) { // no waffles! :*(
         _assert.strictEqual(false, validationPassed);
       });
     });
     it("should allow default values for string", function() {
-      _validate.object("string?hello", undefined, function(validationPassed) {
+      _tean.object("string?hello", undefined, function(validationPassed) {
         _assert.strictEqual(true, validationPassed);
       });
     });
 
     it("should validate an empty map", function() {
-      _validate.object({}, {}, function(validationPassed) {
+      _tean.object({}, {}, function(validationPassed) {
         _assert.strictEqual(true, validationPassed);
       });
     });
 
     it("should validate a complex map", function() {
-      _validate.object({
+      _tean.object({
         duration: "int(0)?3600",
         wakeUpTime: "int(0)",
         meal: "string(breakfast,lunch,dinner)",
@@ -230,7 +230,7 @@ describe("validate", function() {
     });
 
     it("should fail a complex map with invalid params", function() {
-      _validate.object({
+      _tean.object({
         duration: "int(0)?3600",
         wakeUpTime: "int(0)",
         meal: "string(breakfast,lunch,dinner)",
@@ -249,7 +249,7 @@ describe("validate", function() {
 
     it("should replace undefined params with defaults where available", function() {
       let patron = {};
-      _validate.object({
+      _tean.object({
         id: "int?1",
         email: "email?bacon@breakfast.com",
         foodIdPreferences: ["int(0)", "?[]"],
@@ -264,7 +264,7 @@ describe("validate", function() {
 
     it("should delete unexpected properties", function() {
       let patron = {id: 1, breakfast: "waffles"};
-      _validate.object({
+      _tean.object({
         id: "int",
       }, patron, function(validationPassed) {
         _assert.strictEqual(true, validationPassed);
@@ -274,42 +274,42 @@ describe("validate", function() {
     });
 
     it("should validate and transform custom types", function() {
-      _validate.object("breakfastUid", "waffle", function(validationPassed) {
+      _tean.object("breakfastUid", "waffle", function(validationPassed) {
         _assert.strictEqual(true, validationPassed);
       });
-      _validate.object("breakfastUid", "cereal", function(validationPassed) {
+      _tean.object("breakfastUid", "cereal", function(validationPassed) {
         _assert.strictEqual(true, validationPassed);
       });
-      _validate.object("breakfastUid", 0, function(validationPassed) {
+      _tean.object("breakfastUid", 0, function(validationPassed) {
         _assert.strictEqual(true, validationPassed);
       });
-      _validate.object("breakfastUid", -1, function(validationPassed) {
+      _tean.object("breakfastUid", -1, function(validationPassed) {
         _assert.strictEqual(false, validationPassed);
       });
-      _validate.object("breakfastUid", "steak", function(validationPassed) {
+      _tean.object("breakfastUid", "steak", function(validationPassed) {
         _assert.strictEqual(false, validationPassed);
       });
       let data = {buid: "waffle"};
-      _validate.object({buid: "breakfastUid"}, data, function(validationPassed) {
+      _tean.object({buid: "breakfastUid"}, data, function(validationPassed) {
         _assert.strictEqual(0, data.buid);
       });
       data = {buid: "pancake"};
-      _validate.object({buid: "breakfastUid"}, data, function(validationPassed) {
+      _tean.object({buid: "breakfastUid"}, data, function(validationPassed) {
         _assert.strictEqual(1, data.buid);
       });
       data = {buid: 1};
-      _validate.object({buid: "breakfastUid"}, data, function(validationPassed) {
+      _tean.object({buid: "breakfastUid"}, data, function(validationPassed) {
         _assert.strictEqual(1, data.buid);
       });
     });
 
     it("should allow null for array default value", function() {
       let data = {};
-      _validate.object({foodIds: ["int(0)", "?null"]}, data, function(validationPassed, tran) {
+      _tean.object({foodIds: ["int(0)", "?null"]}, data, function(validationPassed, tran) {
         _assert.strictEqual(true, validationPassed);
         _assert.strictEqual(null, data.foodIds);
       });
-      _validate.object({foodIds: ["int(0)", "?null"]}, {foodIds: [1, 2, 3]}, function(validationPassed) {
+      _tean.object({foodIds: ["int(0)", "?null"]}, {foodIds: [1, 2, 3]}, function(validationPassed) {
         _assert.strictEqual(true, validationPassed);
       });
     });
@@ -317,12 +317,12 @@ describe("validate", function() {
 
   describe("#json()", function() {
     it("should validate json string as if it was an object", function() {
-      _validate.json({lovesWaffles: "bool", hungerLevel: "int(0, 10)"}, `{"lovesWaffles":true, "hungerLevel": 8}`, function(validationPassed, parsedBody) {
+      _tean.json({lovesWaffles: "bool", hungerLevel: "int(0, 10)"}, `{"lovesWaffles":true, "hungerLevel": 8}`, function(validationPassed, parsedBody) {
         _assert.strictEqual(true, validationPassed);
       });
     });
     it("should return validated json string as object", function() {
-      _validate.json({lovesWaffles: "bool", hungerLevel: "int(0, 10)"}, `{"lovesWaffles":true, "hungerLevel": 8}`, function(validationPassed, parsedBody) {
+      _tean.json({lovesWaffles: "bool", hungerLevel: "int(0, 10)"}, `{"lovesWaffles":true, "hungerLevel": 8}`, function(validationPassed, parsedBody) {
         _assert.strictEqual(8, parsedBody.hungerLevel);
         _assert.strictEqual(false, parsedBody.status);
       });
