@@ -72,6 +72,7 @@ describe("tean", function() {
       "{}",
       "{tasteIndex:}",
       "{\"tasteIndex\":89}",
+      "[\"one\",\"two\",\"three\"]",
       "bacon@breakfast.com",
       "sausagegravy@",
     ];
@@ -155,7 +156,8 @@ describe("tean", function() {
       });
     });
 
-    let validJsons = ["{}", "{\"userId\":89}"];
+    let validJsons = ["{}", "{\"tasteIndex\":89}", "[\"one\",\"two\",\"three\"]"];
+
     it("should return false when given invalid values for json", function() {
       testType("json", validJsons, false);
     });
@@ -181,7 +183,7 @@ describe("tean", function() {
       });
     });
 
-    let validStrings = ["true", "false", "1", "5", "{}", "{userId:}", "{\"userId\":89}", "bacon@breakfast.com", "paul@"];
+    let validStrings = ["true", "false", "1", "5", "{}", "{tasteIndex:}", "{\"tasteIndex\":89}", "[\"one\",\"two\",\"three\"]", "bacon@breakfast.com", "sausagegravy@"];
     it("should return false when given invalid values for string", function() {
       testType("string", validStrings, false);
     });
@@ -324,7 +326,7 @@ describe("tean", function() {
     it("should return validated json string as object", function() {
       _tean.json({lovesWaffles: "bool", hungerLevel: "int(0, 10)"}, `{"lovesWaffles":true, "hungerLevel": 8}`, function(validationPassed, parsedBody) {
         _assert.strictEqual(8, parsedBody.hungerLevel);
-        _assert.strictEqual(false, parsedBody.status);
+        _assert.strictEqual(true, parsedBody.lovesWaffles);
       });
     });
   });
