@@ -15,7 +15,7 @@ exports.logFailures = false;
 exports.expressRequest = function(paramMap) {
   return function(req, res, next) {
     // set default params
-    let params = req.body || {};
+    let params = req.safeData = req.body || {};
     // TODO: replace console.log
     if (exports.logRequests) {
       console.log(`params: ${JSON.stringify(params)}`);
