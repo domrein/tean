@@ -14,8 +14,12 @@ exports.logFailures = false;
 // express middleware
 exports.expressRequest = function(paramMap) {
   return function(req, res, next) {
-    // set default params
-    let params = req.safeData = req.body || {};
+    // set default params (req.body is cloned to prevent overwriting the original request data)
+    let params = {};
+    if (req.body) {
+      params = JSON.parse(JSON.stringify(req.body));
+    }
+    req.safeData = params;
     // TODO: replace console.log
     if (exports.logRequests) {
       console.log(`params: ${JSON.stringify(params)}`);

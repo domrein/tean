@@ -330,4 +330,41 @@ describe("tean", function() {
       });
     });
   });
+
+  describe("#expressRequest()", function() {
+    let middlewareFunction = _tean.expressRequest({bacon: "string(yes,no)", grits: "string(yes,no)"});
+    it("should return a function", function() {
+      _assert.strictEqual("function", typeof middlewareFunction);
+    });
+    it("should pass validation for valid params using returned function", function() {
+      middlewareFunction({body: {bacon: "yes", grits: "no"}, route: {path: "/"}}, {send: function(statusCode) {
+        _assert.fail("Validation failed.", "Validation passed.");
+      }}, function(){
+      });
+    });
+    it("should not pass validation for invalid params using returned function", function() {
+      middlewareFunction({body: {bacon: "what?", grits: "no"}, route: {path: "/"}}, {send: function(statusCode) {
+      }}, function(){
+        _assert.fail("Validation passed.", "Validation failed.");
+      });
+    });
+    it("should populate safeData", function() {
+      let req = {body: {bacon: "yes", grits: "no", eggs: "maybe"}, route: {path: "/"}};
+      middlewareFunction(req, {send: function(statusCode) {
+      }}, function(){
+        _assert.strictEqual("yes", req.safeData.bacon);
+        _assert.strictEqual("no", req.safeData.grits);
+        _assert.strictEqual(undefined, req.safeData.eggs);
+      });
+    });
+    it("should not alter original request body", function() {
+      let req = {body: {bacon: "yes", grits: "no", eggs: "maybe"}, route: {path: "/"}};
+      middlewareFunction(req, {send: function(statusCode) {
+      }}, function(){
+        _assert.strictEqual("yes", req.body.bacon);
+        _assert.strictEqual("no", req.body.grits);
+        _assert.strictEqual("maybe", req.body.eggs);
+      });
+    });
+  });
 });
