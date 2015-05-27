@@ -249,6 +249,21 @@ describe("tean", function() {
       });
     });
 
+    it("should fail a complex map with missing params", function() {
+      _tean.object({
+        user: {
+          id: "int(1)",
+          name: "string",
+        },
+        note: "string?",
+        image: "string?",
+      }, {
+        userId: 7708,
+      }, function(validationPassed) {
+        _assert.strictEqual(false, validationPassed);
+      });
+    });
+
     it("should replace undefined params with defaults where available", function() {
       let patron = {};
       _tean.object({

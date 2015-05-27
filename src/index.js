@@ -49,6 +49,7 @@ let baseTypes = [
   "json",
   "number",
   "string",
+  // TODO: add IP type
 ];
 
 exports.addBaseTypes = function(typeNames) {
@@ -242,25 +243,32 @@ exports.object = function(map, data, parent, parentProp, callback) {
     let mapKeys = Object.keys(map);
 
     // delete unexpected keys
-    Object.keys(data).forEach(function(dataKey) {
-      if (mapKeys.indexOf(dataKey) === -1) {
-        delete data[dataKey];
-      }
-    });
-
-    _async.each(mapKeys, function(key, each) {
-      exports.object(map[key], data[key], data, key, function(validationPassed, transformedValue) {
-        if (validationPassed) {
-          // set the transformed value on the parent if present
-          if (transformedValue !== undefined) {
-            data[key] = transformedValue;
-          }
-          each(null);
-        }
-        else {
-          each("Validation Failed");
+    if (typeof data === "object" && !Array.isArray(data)) {
+      Object.keys(data).forEach(function(dataKey) {
+        if (mapKeys.indexOf(dataKey) === -1) {
+          delete data[dataKey];
         }
       });
+    }
+
+    _async.each(mapKeys, function(key, each) {
+      if (data === null || data === undefined) {
+        each("Validation Failed");
+      }
+      else {
+        exports.object(map[key], data[key], data, key, function(validationPassed, transformedValue) {
+          if (validationPassed) {
+            // set the transformed value on the parent if present
+            if (transformedValue !== undefined) {
+              data[key] = transformedValue;
+            }
+            each(null);
+          }
+          else {
+            each("Validation Failed");
+          }
+        });
+      }
     }, function(err) {
       if (err) {
         callback(false, data);
