@@ -290,13 +290,14 @@ exports.object = function(map, data, parent, parentProp, callback) {
       args = args[0].substr(1, args[0].length - 2).split(/\s*,\s*/);
     }
     // find default
-    let defaultValue = /\?([^?]*)$/.exec(map);
-    if (defaultValue) {
-      defaultValue = defaultValue[0].substr(1);
+    let defaultValueMatches = /\?([^?]*)$/.exec(map);
+    let defaultValue = null;
+    if (defaultValueMatches) {
+      defaultValue = defaultValueMatches[0].substr(1);
     }
 
     // if there is no value or the value is equal to the provided default
-    if (data === undefined || (defaultValue && data + "" === defaultValue)) {
+    if (data === undefined || (defaultValueMatches && data + "" === defaultValue)) {
       if (defaultValue === null) {
         callback(false, data);
         return;

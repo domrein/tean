@@ -205,6 +205,9 @@ describe("tean", function() {
       _tean.object("string?hello", undefined, function(validationPassed) {
         _assert.strictEqual(true, validationPassed);
       });
+      _tean.object("string(pancakes,waffles)?", "", function(validationPassed) {
+        _assert.strictEqual(true, validationPassed);
+      });
     });
 
     it("should validate an empty map", function() {
