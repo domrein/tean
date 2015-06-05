@@ -242,41 +242,63 @@ exports.object = function(map, data, parent, parentProp, callback) {
   else if (typeof map === "object") {
     let mapKeys = Object.keys(map);
 
-    // delete unexpected keys
-    if (typeof data === "object" && !Array.isArray(data)) {
-      Object.keys(data).forEach(function(dataKey) {
-        if (mapKeys.indexOf(dataKey) === -1) {
-          delete data[dataKey];
-        }
-      });
-    }
+    // optional object param
+    if (mapKeys.length === 1 && mapKeys[0].indexOf("?") === 0) {
+      // find default
+      let defaultValueMatches = /\?([^?]*)$/.exec(mapKeys[0]);
+      let defaultValue = null;
+      if (defaultValueMatches) {
+        defaultValue = defaultValueMatches[0].substr(1);
+      }
 
-    _async.each(mapKeys, function(key, each) {
-      if (data === null || data === undefined) {
-        each("Validation Failed");
+      if (data === undefined || JSON.stringify(data) === defaultValue) {
+        if (data === undefined && parent) {
+          parent[parentProp] = JSON.parse(defaultValue);
+        }
+        callback(true, data);
       }
       else {
-        exports.object(map[key], data[key], data, key, function(validationPassed, transformedValue) {
-          if (validationPassed) {
-            // set the transformed value on the parent if present
-            if (transformedValue !== undefined) {
-              data[key] = transformedValue;
-            }
-            each(null);
-          }
-          else {
-            each("Validation Failed");
+        exports.object(map[mapKeys[0]], data, callback);
+      }
+    }
+    // required object param
+    else {
+      // delete unexpected keys
+      if (typeof data === "object" && !Array.isArray(data)) {
+        Object.keys(data).forEach(function(dataKey) {
+          if (mapKeys.indexOf(dataKey) === -1) {
+            delete data[dataKey];
           }
         });
       }
-    }, function(err) {
-      if (err) {
-        callback(false, data);
-      }
-      else {
-        callback(true, data);
-      }
-    });
+
+      _async.each(mapKeys, function(key, each) {
+        if (data === null || data === undefined) {
+          each("Validation Failed");
+        }
+        else {
+          exports.object(map[key], data[key], data, key, function(validationPassed, transformedValue) {
+            if (validationPassed) {
+              // set the transformed value on the parent if present
+              if (transformedValue !== undefined) {
+                data[key] = transformedValue;
+              }
+              each(null);
+            }
+            else {
+              each("Validation Failed");
+            }
+          });
+        }
+      }, function(err) {
+        if (err) {
+          callback(false, data);
+        }
+        else {
+          callback(true, data);
+        }
+      });
+    }
   }
   else {
     // find type

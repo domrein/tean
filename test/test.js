@@ -333,6 +333,24 @@ describe("tean", function() {
         _assert.strictEqual(true, validationPassed);
       });
     });
+
+    it("should allow optional objects as params", function() {
+      let breakfastOrder = {pancakes: {amount: 1, buttered: true}, cereal: {amount: 1}};
+      _tean.object({
+        pancakes: {"?null": {amount: "int(0)", buttered: "bool"}},
+        bacon: {"?null": {amount: "int(0)", buttered: "bool"}},
+        toast: {'?{"amount": 2, "buttered": true}': {amount: "int(0)", buttered: "bool"}},
+        cereal: {amount: "int(0)", buttered: "bool?false"},
+      }, breakfastOrder, function(validationPassed, normalizedData) {
+        _assert.strictEqual(true, validationPassed);
+        _assert.strictEqual(1, normalizedData.pancakes.amount);
+        _assert.strictEqual(true, normalizedData.pancakes.buttered);
+        _assert.strictEqual(null, normalizedData.bacon);
+        _assert.strictEqual(2, normalizedData.toast.amount);
+        _assert.strictEqual(true, normalizedData.toast.buttered);
+        _assert.strictEqual(false, normalizedData.cereal.buttered);
+      });
+    });
   });
 
   describe("#json()", function() {
