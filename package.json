@@ -1,6 +1,6 @@
 {
   "name": "tean",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "description": "Strict object validation and normalization",
   "main": "src/index.js",
   "directories": {
