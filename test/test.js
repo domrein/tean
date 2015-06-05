@@ -97,7 +97,7 @@ describe("tean", function() {
       });
     };
 
-    let validBools = [true, false];
+    let validBools = [true, false, "true", "false"];
     it("should return false when given invalid values for bool", function() {
       testType("bool", validBools, false);
     });
@@ -126,7 +126,7 @@ describe("tean", function() {
       });
     });
 
-    let validInts = [1, 1.0, -1, 100];
+    let validInts = [1, 1.0, -1, 100, "1", "5"];
     it("should return false when given invalid values for int", function() {
       testType("int", validInts, false);
     });
@@ -170,7 +170,7 @@ describe("tean", function() {
       });
     });
 
-    let validNumbers = [1, 1.0, 1.1, -1, 100];
+    let validNumbers = [1, 1.0, 1.1, -1, 100, "1", "5"];
     it("should return false when given invalid values for number", function() {
       testType("number", validNumbers, false);
     });

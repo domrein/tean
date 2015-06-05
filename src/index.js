@@ -55,6 +55,16 @@ exports.addBaseTypes = function(typeNames) {
     switch (typeName) {
       case "bool":
         exports.addType(typeName, function(value, args, callback) {
+          if (typeof value === "string") {
+            if (value.toLowerCase() === "true") {
+              callback(true, true);
+              return;
+            }
+            if (value.toLowerCase() === "false") {
+              callback(true, false);
+              return;
+            }
+          }
           if (typeof value !== "boolean") {
             callback(false);
             return;
@@ -86,6 +96,10 @@ exports.addBaseTypes = function(typeNames) {
         break;
       case "int":
         exports.addType(typeName, function(value, args, callback) {
+          if (typeof value === "string" && /^-?([1-9][0-9]*|0)$/.exec(value)) {
+            callback(true, parseInt(value));
+            return;
+          }
           if (isNaN(value) || typeof value !== "number" || !/^-?([1-9][0-9]*|0)$/.exec(value.toString())) {
             callback(false);
             return;
@@ -126,6 +140,10 @@ exports.addBaseTypes = function(typeNames) {
         break;
       case "number":
         exports.addType(typeName, function(value, args, callback) {
+          if (typeof value === "string" && /^-?((0\.|[1-9][0-9]*\.|\.)\.?[0-9]+|[1-9][0-9]*|0)$/.exec(value)) {
+            callback(true, parseFloat(value));
+            return;
+          }
           if (isNaN(value) || typeof value !== "number" || !/^-?((0\.|[1-9][0-9]*\.|\.)\.?[0-9]+|[1-9][0-9]*|0)$/.exec(value.toString())) {
             callback(false);
             return;
@@ -215,11 +233,11 @@ exports.object = function(map, data, parent, parentProp, callback) {
       }
       else {
         _async.each(data, function(datum, each) {
-          exports.object(map[0], datum, function(validationPassed, transformedValue) {
+          exports.object(map[0], datum, function(validationPassed, safeData) {
             if (validationPassed) {
-              // set the transformed value on the parent if present
-              if (transformedValue !== undefined) {
-                data[data.indexOf(datum)] = transformedValue;
+              // set the safeData value on the parent if present
+              if (safeData !== undefined) {
+                data[data.indexOf(datum)] = safeData;
               }
               each(null);
             }
@@ -254,8 +272,11 @@ exports.object = function(map, data, parent, parentProp, callback) {
       }
 
       if (data === undefined || JSON.stringify(data) === defaultValue) {
-        if (data === undefined && parent) {
-          parent[parentProp] = JSON.parse(defaultValue);
+        if (data === undefined) {
+          data = JSON.parse(defaultValue);
+        }
+        if (parent) {
+          parent[parentProp] = data;
         }
         callback(true, data);
       }
@@ -279,11 +300,11 @@ exports.object = function(map, data, parent, parentProp, callback) {
           each("Validation Failed");
         }
         else {
-          exports.object(map[key], data[key], data, key, function(validationPassed, transformedValue) {
+          exports.object(map[key], data[key], data, key, function(validationPassed, safeData) {
             if (validationPassed) {
-              // set the transformed value on the parent if present
-              if (transformedValue !== undefined) {
-                data[key] = transformedValue;
+              // set the safeData value on the parent if present
+              if (safeData !== undefined) {
+                data[key] = safeData;
               }
               each(null);
             }
@@ -343,8 +364,8 @@ exports.object = function(map, data, parent, parentProp, callback) {
       }
     }
     else {
-      typeValidators[type].validate(data, args, function(validationPassed, transformedValue) {
-        callback(validationPassed, transformedValue);
+      typeValidators[type].validate(data, args, function(validationPassed, safeData) {
+        callback(validationPassed, safeData);
       });
     }
   }
