@@ -273,12 +273,24 @@ describe("tean", function() {
         id: "int?1",
         email: "email?bacon@breakfast.com",
         foodIdPreferences: ["int(0)", "?[]"],
-      }, patron, function(validationPassed) {
+      }, patron, function(validationPassed, safeData) {
         _assert.strictEqual(true, validationPassed);
-        _assert.strictEqual(1, patron.id);
-        _assert.strictEqual("bacon@breakfast.com", patron.email);
-        _assert.strictEqual(true, Array.isArray(patron.foodIdPreferences));
-        _assert.strictEqual(0, patron.foodIdPreferences.length);
+        _assert.strictEqual(1, safeData.id);
+        _assert.strictEqual("bacon@breakfast.com", safeData.email);
+        _assert.strictEqual(true, Array.isArray(safeData.foodIdPreferences));
+        _assert.strictEqual(0, safeData.foodIdPreferences.length);
+      });
+    });
+
+    it("should not mutate any values passed into the function", function() {
+      let patron = {};
+      _tean.object({
+        id: "int?1",
+        email: "email?bacon@breakfast.com",
+        foodIdPreferences: ["int(0)", "?[]"],
+      }, patron, function(validationPassed, safeData) {
+        _assert.strictEqual(true, validationPassed);
+        _assert.strictEqual("{}", JSON.stringify(patron));
       });
     });
 
@@ -286,10 +298,10 @@ describe("tean", function() {
       let patron = {id: 1, breakfast: "waffles"};
       _tean.object({
         id: "int",
-      }, patron, function(validationPassed) {
+      }, patron, function(validationPassed, safeData) {
         _assert.strictEqual(true, validationPassed);
-        _assert.strictEqual(1, patron.id);
-        _assert.strictEqual(undefined, patron.breakfast);
+        _assert.strictEqual(1, safeData.id);
+        _assert.strictEqual(undefined, safeData.breakfast);
       });
     });
 
@@ -310,24 +322,24 @@ describe("tean", function() {
         _assert.strictEqual(false, validationPassed);
       });
       let data = {buid: "waffle"};
-      _tean.object({buid: "breakfastUid"}, data, function(validationPassed) {
-        _assert.strictEqual(0, data.buid);
+      _tean.object({buid: "breakfastUid"}, data, function(validationPassed, safeData) {
+        _assert.strictEqual(0, safeData.buid);
       });
       data = {buid: "pancake"};
-      _tean.object({buid: "breakfastUid"}, data, function(validationPassed) {
-        _assert.strictEqual(1, data.buid);
+      _tean.object({buid: "breakfastUid"}, data, function(validationPassed, safeData) {
+        _assert.strictEqual(1, safeData.buid);
       });
       data = {buid: 1};
-      _tean.object({buid: "breakfastUid"}, data, function(validationPassed) {
-        _assert.strictEqual(1, data.buid);
+      _tean.object({buid: "breakfastUid"}, data, function(validationPassed, safeData) {
+        _assert.strictEqual(1, safeData.buid);
       });
     });
 
     it("should allow null for array default value", function() {
       let data = {};
-      _tean.object({foodIds: ["int(0)", "?null"]}, data, function(validationPassed, tran) {
+      _tean.object({foodIds: ["int(0)", "?null"]}, data, function(validationPassed, safeData) {
         _assert.strictEqual(true, validationPassed);
-        _assert.strictEqual(null, data.foodIds);
+        _assert.strictEqual(null, safeData.foodIds);
       });
       _tean.object({foodIds: ["int(0)", "?null"]}, {foodIds: [1, 2, 3]}, function(validationPassed) {
         _assert.strictEqual(true, validationPassed);

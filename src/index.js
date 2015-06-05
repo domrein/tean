@@ -15,17 +15,14 @@ exports.logFailures = false;
 exports.expressRequest = function(paramMap) {
   return function(req, res, next) {
     // set default params (req.body is cloned to prevent overwriting the original request data)
-    let params = {};
-    if (req.body) {
-      params = JSON.parse(JSON.stringify(req.body));
-    }
-    req.safeData = params;
+    let params = req.body || {};
     // TODO: replace console.log
     if (exports.logRequests) {
       console.log(`params: ${JSON.stringify(params)}`);
     }
-    exports.object(paramMap, params, function(validationPassed) {
+    exports.object(paramMap, params, function(validationPassed, safeData) {
       if (validationPassed) {
+        req.safeData = safeData;
         next();
       }
       else {
@@ -193,6 +190,11 @@ exports.object = function(map, data, parent, parentProp, callback) {
   if (typeof parent === "function") {
     callback = parent;
     parent = undefined;
+    parentProp = undefined;
+  }
+  // clone the object if this is the initial call so we don't mutate it
+  if (parent === undefined && typeof data === "object") {
+    data = JSON.parse(JSON.stringify(data));
   }
   // if map is an object, loop over properties
   // if it's an array, move to enclosed item
