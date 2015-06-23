@@ -197,6 +197,14 @@ describe("tean", function() {
       _tean.object("string(bacon,pancakes)", "pancakes", function(validationPassed) {
         _assert.strictEqual(true, validationPassed);
       });
+      // string args are case insensitive
+      _tean.object("string(bacon,pancakes)", "PaNcakEs", function(validationPassed) {
+        _assert.strictEqual(true, validationPassed);
+      });
+      // string args are case insensitive
+      _tean.object("string(baCoN,pancakes)", "bacon", function(validationPassed) {
+        _assert.strictEqual(true, validationPassed);
+      });
       _tean.object("string(bacon,pancakes)", "waffles", function(validationPassed) { // no waffles! :*(
         _assert.strictEqual(false, validationPassed);
       });

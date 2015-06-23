@@ -155,12 +155,19 @@ exports.addBaseTypes = function(typeNames) {
         break;
       case "string":
         exports.addType(typeName, function(value, args, callback) {
+          // strings should be case insensitive
+          if (args) {
+            args = args.map(function(arg) {
+              return arg.toLowerCase();
+            });
+          }
+
           if (typeof value !== "string") {
             callback(false);
             return;
           }
           // args is a list of acceptable strings
-          if (args && args.indexOf(value) === -1) {
+          if (args && args.indexOf(value.toLowerCase()) === -1) {
             callback(false);
             return;
           }
