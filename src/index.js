@@ -1,5 +1,5 @@
 // GOALS:
-// terse syntax
+// declarative terse syntax
 // all fields required or have a default value supplied
 
 // TODO: return user readable messages with rejections
@@ -8,8 +8,8 @@
 
 let _async = require("async");
 
-exports.logRequests = false;
-exports.logFailures = false;
+exports.requestLogFunction = null;
+exports.failureLogFunction = null;
 
 // express middleware
 exports.expressRequest = function(paramMap) {
@@ -17,8 +17,8 @@ exports.expressRequest = function(paramMap) {
     // set default params (req.body is cloned to prevent overwriting the original request data)
     let params = req.body || {};
     // TODO: replace console.log
-    if (exports.logRequests) {
-      console.log(`params: ${JSON.stringify(params)}`);
+    if (exports.requestLogFunction) {
+      exports.requestLogFunction(`params: ${JSON.stringify(params)}`);
     }
     exports.object(paramMap, params, function(validationPassed, safeData) {
       if (validationPassed) {
@@ -26,10 +26,10 @@ exports.expressRequest = function(paramMap) {
         next();
       }
       else {
-        if (exports.logFailures) {
-          console.log(`Invalid parameters supplied for ${req.route.path}`);
-          console.log(`Expecting: ${JSON.stringify(paramMap)}`);
-          console.log(`Received: ${JSON.stringify(params)}`);
+        if (exports.failureLogFunction) {
+          exports.failureLogFunction(`Invalid parameters supplied for ${req.route.path}`);
+          exports.failureLogFunction(`Expecting: ${JSON.stringify(paramMap)}`);
+          exports.failureLogFunction(`Received: ${JSON.stringify(params)}`);
         }
         res.send(400);
       }
