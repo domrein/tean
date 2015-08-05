@@ -372,6 +372,16 @@ describe("tean", function() {
         _assert.strictEqual(false, normalizedData.cereal.buttered);
       });
     });
+
+    it("should place normalized values into arrays", function() {
+      // let breakfastItemIds = ;
+      _tean.object({itemIds: ["int"]}, {itemIds: [0, "10", 15]}, function(validated, normalizedData) {
+        _assert.strictEqual(true, validated);
+        _assert.strictEqual(0, normalizedData.itemIds[0]);
+        _assert.strictEqual(10, normalizedData.itemIds[1]);
+        _assert.strictEqual(15, normalizedData.itemIds[2]);
+      });
+    });
   });
 
   describe("#json()", function() {
