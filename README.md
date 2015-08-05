@@ -42,3 +42,9 @@ Register a validator with tean. This must happen before the type can be used in 
 
 ###extendType(baseType, typeName, args)
 Register a new type by setting parameters on an existing one. baseType is a type that has already been registered with tean. typeName is the name given to the extended type. args are the parameters passed to the validator. extendType can be useful if you find yourself adding the same arguments to type in a map over and over again. For example, if you need to accept an integer 1 through 15 as a menuItem in several places, you could write "{menuItem: "int(0, 15)"} everywhere in your code. However, it's more maintainable to extend the int type by creating a new "menuItem" type that always has the range 1 through 15 predefined.
+
+###requestLogFunction
+Assign a function to `tean.requestLogFunction` if you would like tean to log parameters for express requests. The function should accept a string as its only argument.
+
+###failureLogFunction
+Assign a function to `tean.requestLogFunction` if you would like tean to log failures when an express request fails validation. The function should accept a string as its only argument.
