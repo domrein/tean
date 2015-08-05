@@ -16,7 +16,6 @@ exports.expressRequest = function(paramMap) {
   return function(req, res, next) {
     // set default params (req.body is cloned to prevent overwriting the original request data)
     let params = req.body || {};
-    // TODO: replace console.log
     if (exports.requestLogFunction) {
       exports.requestLogFunction(`params: ${JSON.stringify(params)}`);
     }
