@@ -16,6 +16,7 @@ tean.object({breakfast: "string?waffles", addSyrup: "bool?true"}, {breakfast: "p
   // Note that the original object is not altered! Normalized and validated data is passed into "safeData" in the callback
 });
 ```
+There are lots more examples in test/test.js !
 
 ##Documentation
 ###expressRequest(req, res, next)
