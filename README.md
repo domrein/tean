@@ -4,16 +4,21 @@ Tean is a declarative, strict and asynchronous way to validate and normalize dat
 ##Quick Examples
 ```javascript
 // simple validation
-tean.object({breakfast: "string"}, {breakfast: "bacon"}, function(validated, safeData) {
-  console.log(validated); // true
-  console.log(safeData); // {breakfast: "bacon"}
+tean.object({breakfast: "string"}, {breakfast: "bacon"}, (isValid, result) => {
+  console.log(isValid); // true
+  console.log(result);  // {breakfast: "bacon"}
+});
+
+tean.object({breakfast: "string"}, {breakfast: null}, (isValid, result) => {
+  console.log(isValid); // false
+  console.log(result);  // ["breakfast (null) is not a string"]
 });
 
 // optional parameters
-tean.object({breakfast: "string?waffles", addSyrup: "bool?true"}, {breakfast: "pancakes"}, function(validated, safeData) {
-  console.log(validated); // true
-  console.log(safeData); // {breakfast: "pancakes", addSyrup: true}
-  // Note that the original object is not altered! Normalized and validated data is passed into "safeData" in the callback
+tean.object({breakfast: "string?waffles", addSyrup: "bool?true"}, {breakfast: "pancakes"}, (isValid, result) => {
+  console.log(isValid); // true
+  console.log(result); // {breakfast: "pancakes", addSyrup: true}
+  // Note that the original object is not altered! Normalized and validated data is passed into "result" in the callback
 });
 ```
 There are lots more examples in test/test.js !
@@ -22,8 +27,9 @@ There are lots more examples in test/test.js !
 ###expressRequest(req, res, next)
 expressRequest is used as middleware for Express. Replies to request with a 400 error if validation fails. Validated and normalized data is attached to the request object as `req.safeData`.
 
-###object(map, data, callback(validated, safeData))
-object is used to validate data and provide it normalized as `safeData` in the callback. object does not alter `data`. safeData contains only object keys that have been validated. This means any object keys not present in the map will not be copied into safeData. Also, any fields not present in data that have default values in map will be present in safeData with the defined default. If validated is false, safeData is null.
+###object(map, data, callback(isValid, result))
+object is used to validate data and provide it normalized as `result` in the callback. object does not alter `data`. result contains only object keys that have been validated. This means any object keys not present in the map will not be copied into result. Also, any fields not present in data that have default values in map will be present in result with the defined default. If validated is false, safeData is an array of failure messages
+indicating which properties failed and why.
 
 ###json(map, jsonData, callback(validate, safeData))
 json is the same as object, but it accepts a json string instead of a Javascript object.
