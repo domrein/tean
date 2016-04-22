@@ -89,12 +89,13 @@ exports.addBaseTypes = typeNames => {
             callback(false, "not an email");
             return;
           }
+          value = value.trim();
           const results = value.match(/\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/gi);
           if (!results || results.length !== 1 || results[0].length !== value.length) {
             callback(false, "not an email");
             return;
           }
-          callback(true);
+          callback(true, value);
         });
         break;
       case "int":
