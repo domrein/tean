@@ -159,6 +159,7 @@ exports.addBaseTypes = typeNames => {
             args = args.map(function(arg) {
               return arg.toLowerCase();
             });
+            args = args.map(arg => arg.toLowerCase());
           }
 
           if (typeof value !== "string") {
