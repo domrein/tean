@@ -49,6 +49,7 @@ const baseTypes = [
   "json",
   "number",
   "string",
+  "uuid",
   // TODO: add IP type
 ];
 
@@ -170,7 +171,17 @@ exports.addBaseTypes = typeNames => {
             return;
           }
           callback(true);
-        });
+        }, defaultValue => defaultValue === "null" ? null : defaultValue);
+        break;
+      case "uuid":
+        exports.addType(typeName, (value, args, callback) => {
+          if (typeof value === "string" && /[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}/.test(value)) {
+            callback(true, value);
+          }
+          else {
+            callback(false, "not a uuid");
+          }
+        }, defaultValue => defaultValue === "null" ? null : defaultValue);
         break;
       default:
         throw new Error(`Invalid type (${typeName}) specified. addBaseValidators accepts only the following: ${baseTypes.join(",")}`);
