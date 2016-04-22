@@ -156,9 +156,6 @@ exports.addBaseTypes = typeNames => {
         exports.addType(typeName, (value, args, callback) => {
           // strings should be case insensitive
           if (args) {
-            args = args.map(function(arg) {
-              return arg.toLowerCase();
-            });
             args = args.map(arg => arg.toLowerCase());
           }
 
