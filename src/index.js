@@ -43,6 +43,7 @@ exports.expressRequest = function(paramMap) {
 const typeValidators = {};
 
 const baseTypes = [
+  "any",
   "bool",
   "email",
   "int",
@@ -57,6 +58,11 @@ exports.addBaseTypes = typeNames => {
   typeNames = typeNames || baseTypes;
   typeNames.forEach(typeName => {
     switch (typeName) {
+      case "any":
+        exports.addType(typeName, (value, args, callback) => {
+          callback(true, value);
+        });
+        break;
       case "bool":
         exports.addType(typeName, (value, args, callback) => {
           if (typeof value === "string") {
