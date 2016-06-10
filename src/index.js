@@ -181,8 +181,10 @@ exports.addBaseTypes = typeNames => {
         break;
       case "uuid":
         exports.addType(typeName, (value, args, callback) => {
-          if (typeof value === "string" && /[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}/.test(value)) {
-            callback(true, value);
+          if (typeof value === "string"
+            && value.length === 36
+            && /[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}/.test(value)) {
+            callback(true, value.toLowerCase());
           }
           else {
             callback(false, "not a uuid");
