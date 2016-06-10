@@ -486,6 +486,22 @@ describe("tean", () => {
       });
     });
 
+    it("should fail empty array of objects", () => {
+      _tean.object({
+        waffles: [{
+          name: "string",
+          whippedCream: "bool?true",
+          syrup: "bool",
+          strawberries: "bool",
+        }],
+      }, {
+        waffles: [],
+      }, (isValid, result) => {
+        _assert.strictEqual(false, isValid);
+        _assert.strictEqual("waffles. ([]) is empty", result[0]);
+      });
+    });
+
     it("should provide a map of failure messages for failed validation", () => {
       _tean.object({
         cereal: {milk: "bool", sugar: "bool?true"},

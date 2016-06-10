@@ -250,6 +250,7 @@ exports.object = function(entryMap, entryData, callback) {
   const validate = (map, data, path, callback) => {
     // if map is an array, move to enclosed item
     if (Array.isArray(map)) {
+      // if map is empty array (why would you do this?)
       if (map.length === 0) {
         if (Array.isArray(data) && data.length === 0) {
           callback(true);
@@ -263,6 +264,12 @@ exports.object = function(entryMap, entryData, callback) {
           callback(false);
         }
       }
+      // if array is required but has no data
+      else if (map.length === 1 && (!data || !data.length)) {
+        failureMessages.push(`${path}${path ? "." : ""} (${typeof data === "object" ? JSON.stringify(data) : data}) is empty`)
+        callback(false);
+      }
+      // if array has data or defaults are available
       else if ((data === undefined && map.length === 2) || Array.isArray(data)) {
         let defaultString = null;
         if (data === undefined && map.length === 2) {
