@@ -74,6 +74,10 @@ describe("tean", () => {
       "[\"one\",\"two\",\"three\"]",
       "bacon@breakfast.com",
       "sausagegravy@",
+      "fa913d03-dad3-4e59-b1b0-f83928b764d8",
+      "FA913D03-DAD3-4E59-B1B0-F83928B764D8",
+      "ga913d0z-dad3-4e59-b1b0-f83928b764d8",
+      "fa913d03-dad3-4e59-b1b0-f83928b764d",
     ];
 
     const testType = function(type, validValues, expectedResult) {
@@ -112,7 +116,7 @@ describe("tean", () => {
       }
     };
 
-    let validBools = [
+    const validBools = [
       {input: true},
       {input: false},
       {input: "true", output: true},
@@ -135,7 +139,7 @@ describe("tean", () => {
       });
     });
 
-    let validEmails = [
+    const validEmails = [
       {input: "bacon@breakfast.com"},
     ];
     it("should return false when given invalid values for email", () => {
@@ -151,7 +155,7 @@ describe("tean", () => {
       });
     });
 
-    let validInts = [
+    const validInts = [
       {input: 1},
       {input: 1.0},
       {input: -1},
@@ -189,7 +193,7 @@ describe("tean", () => {
       });
     });
 
-    let validJsons = [
+    const validJsons = [
       {input: "{}"},
       {input: "{\"tasteIndex\":89}"},
       {input: "[\"one\",\"two\",\"three\"]"},
@@ -207,7 +211,7 @@ describe("tean", () => {
       });
     });
 
-    let validNumbers = [
+    const validNumbers = [
       {input: 1},
       {input: 1.0},
       {input: 1.1},
@@ -229,7 +233,7 @@ describe("tean", () => {
       });
     });
 
-    let validStrings = [
+    const validStrings = [
       {input: "true"},
       {input: "false"},
       {input: "1"},
@@ -240,6 +244,10 @@ describe("tean", () => {
       {input: "[\"one\",\"two\",\"three\"]"},
       {input: "bacon@breakfast.com"},
       {input: "sausagegravy@"},
+      {input: "fa913d03-dad3-4e59-b1b0-f83928b764d8"},
+      {input: "FA913D03-DAD3-4E59-B1B0-F83928B764D8"},
+      {input: "ga913d0z-dad3-4e59-b1b0-f83928b764d8"},
+      {input: "fa913d03-dad3-4e59-b1b0-f83928b764d"},
     ];
     it("should return false when given invalid values for string", () => {
       testType("string", validStrings, false);
@@ -276,6 +284,17 @@ describe("tean", () => {
         _assert.strictEqual(true, isValid);
         _assert.strictEqual("", result);
       });
+    });
+
+    let validUuids = [
+      {input: "fa913d03-dad3-4e59-b1b0-f83928b764d8"},
+      {input: "FA913D03-DAD3-4E59-B1B0-F83928B764D8", output: "fa913d03-dad3-4e59-b1b0-f83928b764d8"},
+    ];
+    it("should return false when given invalid values for uuid", () => {
+      testType("uuid", validUuids, false);
+    });
+    it("should return true when given valid values for uuid", () => {
+      testType("uuid", validUuids, true);
     });
 
     it("should validate an empty map", () => {
