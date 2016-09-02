@@ -15,7 +15,7 @@ tean.object({breakfast: "string"}, {breakfast: null}, (isValid, result) => {
 });
 
 // optional parameters
-tean.object({breakfast: "string?waffles", addSyrup: "bool?true"}, {breakfast: "pancakes"}, (isValid, result) => {
+tean.object({breakfast: "string=waffles", addSyrup: "bool=true"}, {breakfast: "pancakes"}, (isValid, result) => {
   console.log(isValid); // true
   console.log(result); // {breakfast: "pancakes", addSyrup: true}
   // Note that the original object is not altered! Normalized and validated data is passed into "result" in the callback

@@ -2,8 +2,6 @@
 // declarative terse syntax
 // all fields required or have a default value supplied
 
-// TODO: return user readable messages with rejections
-
 "use strict";
 
 const _async = require("async");
@@ -56,145 +54,13 @@ const baseTypes = [
 
 exports.addBaseTypes = typeNames => {
   typeNames = typeNames || baseTypes;
-  typeNames.forEach(typeName => {
-    switch (typeName) {
-      case "any":
-        exports.addType(typeName, (value, args, callback) => {
-          callback(true, value);
-        });
-        break;
-      case "bool":
-        exports.addType(typeName, (value, args, callback) => {
-          if (typeof value === "string") {
-            if (value.toLowerCase() === "true") {
-              callback(true, true);
-              return;
-            }
-            if (value.toLowerCase() === "false") {
-              callback(true, false);
-              return;
-            }
-          }
-          if (typeof value !== "boolean") {
-            callback(false, "not a bool");
-            return;
-          }
-          callback(true);
-        }, defaultValue => {
-          if (defaultValue === "true") {
-            return true;
-          }
-          else if (defaultValue === "false"){
-            return false;
-          }
-          return defaultValue;
-        });
-        break;
-      case "email":
-        exports.addType(typeName, (value, args, callback) => {
-          if (typeof value !== "string") {
-            callback(false, "not an email");
-            return;
-          }
-          value = value.trim();
-          const results = value.match(/\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/gi);
-          if (!results || results.length !== 1 || results[0].length !== value.length) {
-            callback(false, "not an email");
-            return;
-          }
-          callback(true, value);
-        });
-        break;
-      case "int":
-        exports.addType(typeName, (value, args, callback) => {
-          if (typeof value === "string" && /^-?([1-9][0-9]*|0)$/.exec(value)) {
-            callback(true, parseInt(value));
-            return;
-          }
-          if (isNaN(value) || typeof value !== "number" || !/^-?([1-9][0-9]*|0)$/.exec(value.toString())) {
-            callback(false, "not an int");
-            return;
-          }
-          if (args && args.length > 0) {
-            if (value < parseInt(args[0])) {
-              callback(false, "not an int");
-              return;
-            }
-          }
-          if (args && args.length > 1) {
-            if (value > parseInt(args[1])) {
-              callback(false, "not an int");
-              return;
-            }
-          }
-          callback(true);
-        }, defaultValue => parseInt(defaultValue));
-        break;
-      case "json":
-        exports.addType(typeName, (value, args, callback) => {
-          // JSON.parse will work on simple types like "1", but only accept json objects and arrays
-          if (typeof value !== "string" || !/^[{[]/.exec(value.toString())) {
-            callback(false, "not valid JSON");
-            return;
-          }
-          try {
-            JSON.parse(value);
-          }
-          catch (err) {
-            callback(false, "not valid JSON");
-            return;
-          }
-          callback(true);
-        });
-        break;
-      case "number":
-        exports.addType(typeName, (value, args, callback) => {
-          if (typeof value === "string" && /^-?((0\.|[1-9][0-9]*\.|\.)\.?[0-9]+|[1-9][0-9]*|0)$/.exec(value)) {
-            callback(true, parseFloat(value));
-            return;
-          }
-          if (isNaN(value) || typeof value !== "number" || !/^-?((0\.|[1-9][0-9]*\.|\.)\.?[0-9]+|[1-9][0-9]*|0)$/.exec(value.toString())) {
-            callback(false, "not a number");
-            return;
-          }
-          callback(true);
-        }, defaultValue => parseFloat(defaultValue));
-        break;
-      case "string":
-        exports.addType(typeName, (value, args, callback) => {
-          // strings should be case insensitive
-          if (args) {
-            args = args.map(arg => arg.toLowerCase());
-          }
-
-          if (typeof value !== "string") {
-            callback(false, "not a string");
-            return;
-          }
-          // args is a list of acceptable strings
-          if (args && args.indexOf(value.toLowerCase()) === -1) {
-            callback(false, "not in list of acceptable args");
-            return;
-          }
-          callback(true);
-        }, defaultValue => defaultValue === "null" ? null : defaultValue);
-        break;
-      case "uuid":
-        exports.addType(typeName, (value, args, callback) => {
-          if (typeof value === "string"
-            && value.length === 36
-            && /[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}/.test(value)) {
-            callback(true, value.toLowerCase());
-          }
-          else {
-            callback(false, "not a uuid");
-          }
-        }, defaultValue => defaultValue === "null" ? null : defaultValue);
-        break;
-      default:
-        throw new Error(`Invalid type (${typeName}) specified. addBaseValidators accepts only the following: ${baseTypes.join(",")}`);
+  for (const typeName of typeNames) {
+    if (!baseTypes.includes(typeName)) {
+      throw new Error(`Invalid type (${typeName}) specified. addBaseValidators accepts only the following: ${baseTypes.join(",")}`);
     }
-  });
+    const {name, validate, parseDefault} = require(`./type/${typeName}.js`);
+    exports.addType(name, validate, parseDefault);
+  }
 };
 
 // validateFunction should take a callback, formatDefaultFunction should be a synchronous function
@@ -208,8 +74,8 @@ exports.addType = function(typeName, validateFunction, formatDefaultFunction) {
 };
 
 // adds a new type that is the same as another type but with preset args
-exports.extendType = function(baseType, typeName, args) {
- exports.addType(typeName, function(value, ignoredArgs, callback) {
+exports.extendType = (baseType, typeName, args) => {
+ exports.addType(typeName, (value, ignoredArgs, callback) => {
    typeValidators[baseType].validate(value, args, callback);
  }, typeValidators[baseType].formatDefault);
 };
@@ -240,6 +106,16 @@ const setByPath = (target, path, value) => {
   }
 };
 
+const parseDefault = key => {
+  const matches = /[=!]([^=!]*)$/.exec(key);
+  if (matches) {
+    const type = matches[0].charAt(0);
+    const value = matches[0].substr(1);
+    return {value, type};
+  }
+
+  return null;
+};
 
 // parent and prop are here so we can save off default values
 exports.object = function(entryMap, entryData, callback) {
@@ -268,7 +144,7 @@ exports.object = function(entryMap, entryData, callback) {
       }
       // if array is required but has no data
       else if (map.length === 1 && (!data || !data.length)) {
-        failureMessages.push(`${path}${path ? "." : ""} (${typeof data === "object" ? JSON.stringify(data) : data}) is empty`)
+        failureMessages.push(`${path}${path ? "." : ""} (${typeof data === "object" ? JSON.stringify(data) : data}) is empty`);
         callback(false);
       }
       // if array has data or defaults are available
@@ -315,25 +191,32 @@ exports.object = function(entryMap, entryData, callback) {
     else if (typeof map === "object") {
       const mapKeys = Object.keys(map);
 
+      // if data isn't an object
       if (data !== undefined && (typeof data !== "object" || Array.isArray(data))) {
         failureMessages.push(`${path}${path ? "." : ""} (${typeof data === "object" ? JSON.stringify(data) : data}) is not an object`);
         callback(false);
       }
       // optional object param
-      else if (mapKeys.length === 1 && mapKeys[0].indexOf("?") === 0) {
-        // find default
-        const defaultValueMatches = /\?([^?]*)$/.exec(mapKeys[0]);
-        let defaultValue = null;
-        if (defaultValueMatches) {
-          defaultValue = defaultValueMatches[0].substr(1);
-        }
+      else if (mapKeys.length === 1 && (mapKeys[0].startsWith("=") || mapKeys[0].startsWith("!"))) {
+        const defaults = parseDefault(mapKeys[0]);
 
-        if (data === undefined || JSON.stringify(data) === defaultValue) {
-          if (data === undefined) {
-            data = JSON.parse(defaultValue);
+        // should we apply a default?
+        if (defaults && (
+          data === undefined ||
+          (data === null && defaults.type === "!" && defaults.value === "null") ||
+          data.toString() === defaults.value
+        )) {
+          if (data === undefined && defaults.type === "=") {
+            data = JSON.parse(defaults.value);
           }
+          else {
+            data = defaults.value === "null" ? null : undefined;
+          }
+
           if (path) {
-            setByPath(entryData, path, data);
+            if (data !== undefined) {
+              setByPath(entryData, path, data);
+            }
           }
           else {
             entryData = data;
@@ -353,11 +236,11 @@ exports.object = function(entryMap, entryData, callback) {
         else {
           // delete unexpected keys
           if (typeof data === "object" && !Array.isArray(data) && data) {
-            Object.keys(data).forEach(dataKey => {
-              if (mapKeys.indexOf(dataKey) === -1) {
+            for (const dataKey of Object.keys(data)) {
+              if (!mapKeys.includes(dataKey)) {
                 delete data[dataKey];
               }
-            });
+            }
           }
           // validate all keys
           let keyFailed = false;
@@ -388,7 +271,7 @@ exports.object = function(entryMap, entryData, callback) {
     }
     else {
       // find type
-      const type = /^[^(?]*/.exec(map)[0];
+      const type = /^[^(=!]*/.exec(map)[0];
       if (!typeValidators.hasOwnProperty(type)) {
         throw new Error(`Nonexistant type (${type}) specified. Valid types are: ${Object.keys(typeValidators).join(", ")}`);
       }
@@ -398,37 +281,37 @@ exports.object = function(entryMap, entryData, callback) {
         args = args[0].substr(1, args[0].length - 2).split(/\s*,\s*/);
       }
       // find default
-      const defaultValueMatches = /\?([^?]*)$/.exec(map);
-      let defaultValue = null;
-      if (defaultValueMatches) {
-        defaultValue = defaultValueMatches[0].substr(1);
-      }
+      const defaults = parseDefault(map);
 
-      // if there is no value or the value is equal to the provided default
-      if (data === undefined || (defaultValueMatches && data + "" === defaultValue)) {
-        if (defaultValue === null) {
-          failureMessages.push(`${path} (${typeof data === "object" ? JSON.stringify(data) : data}) is required but missing`);
-          callback(false);
-          return;
+      // should we apply a default?
+      if (defaults && (
+        data === undefined ||
+        (data === null && defaults.type === "!" && defaults.value === "null") ||
+        data.toString() === defaults.value
+      )) {
+        if (defaults.type === "=") {
+          if (typeValidators[type].formatDefault) {
+            data = typeValidators[type].formatDefault(defaults.value);
+          }
+          else {
+            data = defaults.value;
+          }
         }
         else {
-          // default values are always valid
-          if (typeValidators[type].formatDefault) {
-            data = typeValidators[type].formatDefault(defaultValue);
-          }
-          else {
-            data = defaultValue;
-          }
+          data = defaults.value === "null" ? null : undefined;
+        }
 
-          // save off default value
-          if (path) {
+        // save off default value
+        if (path) {
+          // don't write out undefined values
+          if (data !== undefined) {
             setByPath(entryData, path, data);
           }
-          else {
-            entryData = data;
-          }
-          callback(true);
         }
+        else {
+          entryData = data;
+        }
+        callback(true);
       }
       else {
         typeValidators[type].validate(data, args, (isValid, result) => {
