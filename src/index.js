@@ -287,7 +287,7 @@ exports.object = function(entryMap, entryData, callback) {
       if (defaults && (
         data === undefined ||
         (data === null && defaults.type === "!" && defaults.value === "null") ||
-        data.toString() === defaults.value
+        (data !== null && data.toString() === defaults.value)
       )) {
         if (defaults.type === "=") {
           if (typeValidators[type].formatDefault) {
