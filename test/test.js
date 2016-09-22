@@ -528,6 +528,13 @@ describe("tean", () => {
       });
     });
 
+    it("should reject null if not explicitly defined as default", () => {
+      _tean.object("string=pancakes", null, (isValid, result) => {
+        _assert.strictEqual(false, isValid);
+        _assert.strictEqual("(null) is not a string", result.toString());
+      });
+    });
+
     it("should allow undefined for default value", () => {
       _tean.object("string!undefined", undefined, (isValid, result) => {
         _assert.strictEqual(true, isValid);
