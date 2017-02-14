@@ -16,7 +16,7 @@ describe("tean", () => {
     it("should allow adding a custom type", () => {
       // accepts breakfast strings and ids and converts strings to ids
       _tean.addType("breakfastUid", (value, args, callback) => {
-        _tean.object("int(0)", value, (isValid, result) => {
+        _tean.normalize("int(0)", value, (isValid, result) => {
           if (isValid) {
             callback(true, result);
           }
@@ -40,17 +40,17 @@ describe("tean", () => {
 
   describe("#extendType()", () => {
     it("should allow extending of a base type", () => {
-      _tean.extendType("int", "tasteIndex", [0, 5]);
-      _tean.object("tasteIndex", 2, (isValid, result) => {
+      _tean.extendType("int", "tasteIndex", "0,5");
+      _tean.normalize("tasteIndex", 2, (isValid, result) => {
         _assert.strictEqual(true, isValid);
       });
-      _tean.object("tasteIndex", 300, (isValid, result) => {
+      _tean.normalize("tasteIndex", 300, (isValid, result) => {
         _assert.strictEqual(false, isValid);
       });
     });
   });
 
-  describe("#object()", function() {
+  describe("#normalize()", function() {
     const values = [
       NaN,
       null,
@@ -99,7 +99,7 @@ describe("tean", () => {
       }
       for (const testValue of testValues) {
         if (expectedResult) {
-          _tean.object(type, testValue.input, (isValid, result) => {
+          _tean.normalize(type, testValue.input, (isValid, result) => {
             _assert.strictEqual(expectedResult, isValid, `value (${testValue.input}) should return ${expectedResult} for type (${type})`);
             let output = testValue.input;
             if (testValue.hasOwnProperty("output")) {
@@ -109,7 +109,7 @@ describe("tean", () => {
           });
         }
         else {
-          _tean.object(type, testValue, isValid => {
+          _tean.normalize(type, testValue, isValid => {
             _assert.strictEqual(expectedResult, isValid, `value (${testValue}) should return ${expectedResult} for type (${type})`);
           });
         }
@@ -129,11 +129,11 @@ describe("tean", () => {
       testType("bool", validBools, true);
     });
     it("should allow default values for bool", () => {
-      _tean.object("bool=true", undefined, (isValid, result) => {
+      _tean.normalize("bool=true", undefined, (isValid, result) => {
         _assert.strictEqual(true, isValid);
         _assert.strictEqual(true, result);
       });
-      _tean.object("bool=false", undefined, (isValid, result) => {
+      _tean.normalize("bool=false", undefined, (isValid, result) => {
         _assert.strictEqual(true, isValid);
         _assert.strictEqual(false, result);
       });
@@ -149,7 +149,7 @@ describe("tean", () => {
       testType("email", validEmails, true);
     });
     it("should allow default values for email", () => {
-      _tean.object("email=bacon@breakfast.com", undefined, (isValid, result) => {
+      _tean.normalize("email=bacon@breakfast.com", undefined, (isValid, result) => {
         _assert.strictEqual(true, isValid);
         _assert.strictEqual("bacon@breakfast.com", result);
       });
@@ -170,24 +170,24 @@ describe("tean", () => {
       testType("int", validInts, true);
     });
     it("should respect arguments for int", () => {
-      _tean.object("int(0)", 0, isValid => {
+      _tean.normalize("int(0)", 0, isValid => {
         _assert.strictEqual(true, isValid);
       });
-      _tean.object("int(0)", 10, isValid => {
+      _tean.normalize("int(0)", 10, isValid => {
         _assert.strictEqual(true, isValid);
       });
-      _tean.object("int(0,5)", 3, isValid => {
+      _tean.normalize("int(0,5)", 3, isValid => {
         _assert.strictEqual(true, isValid);
       });
-      _tean.object("int(0,5)", 6, isValid => {
+      _tean.normalize("int(0,5)", 6, isValid => {
         _assert.strictEqual(false, isValid);
       });
-      _tean.object("int(0,5)", -1, isValid => {
+      _tean.normalize("int(0,5)", -1, isValid => {
         _assert.strictEqual(false, isValid);
       });
     });
     it("should allow default values for int", () => {
-      _tean.object("int=1", undefined, (isValid, result) => {
+      _tean.normalize("int=1", undefined, (isValid, result) => {
         _assert.strictEqual(true, isValid);
         _assert.strictEqual(1, result);
       });
@@ -205,7 +205,7 @@ describe("tean", () => {
       testType("json", validJsons, true);
     });
     it("should allow default values for json", () => {
-      _tean.object("json={}", undefined, (isValid, result) => {
+      _tean.normalize("json={}", undefined, (isValid, result) => {
         _assert.strictEqual(true, isValid);
         _assert.strictEqual("{}", result);
       });
@@ -227,7 +227,7 @@ describe("tean", () => {
       testType("number", validNumbers, true);
     });
     it("should allow default values for number", () => {
-      _tean.object("number=9", undefined, (isValid, result) => {
+      _tean.normalize("number=9", undefined, (isValid, result) => {
         _assert.strictEqual(true, isValid);
         _assert.strictEqual(9, result);
       });
@@ -241,46 +241,41 @@ describe("tean", () => {
       {input: "{}"},
       {input: "{tasteIndex:}"},
       {input: "{\"tasteIndex\":89}"},
-      {input: "[\"one\",\"two\",\"three\"]"},
       {input: "bacon@breakfast.com"},
       {input: "sausagegravy@"},
-      {input: "fa913d03-dad3-4e59-b1b0-f83928b764d8"},
-      {input: "FA913D03-DAD3-4E59-B1B0-F83928B764D8"},
-      {input: "ga913d0z-dad3-4e59-b1b0-f83928b764d8"},
-      {input: "fa913d03-dad3-4e59-b1b0-f83928b764d"},
     ];
     it("should return false when given invalid values for string", () => {
-      testType("string", validStrings, false);
+      testType("string(20)", validStrings, false);
     });
     it("should return true when given valid values for string", () => {
-      testType("string", validStrings, true);
+      testType("string(20)", validStrings, true);
     });
     it("should respect arguments for string", () => {
-      _tean.object("string(bacon,pancakes)", "bacon", isValid => {
+      _tean.normalize("string(bacon,pancakes)", "bacon", isValid => {
         _assert.strictEqual(true, isValid);
       });
-      _tean.object("string(bacon,pancakes)", "pancakes", isValid => {
+      _tean.normalize("string(bacon,pancakes)", "pancakes", isValid => {
         _assert.strictEqual(true, isValid);
       });
 
       // string args are case insensitive
-      _tean.object("string(bacon,pancakes)", "PaNcakEs", isValid => {
+      _tean.normalize("string(bacon,pancakes)", "PaNcakEs", isValid => {
         _assert.strictEqual(true, isValid);
       });
-      _tean.object("string(baCoN,pancakes)", "bacon", isValid => {
+      _tean.normalize("string(baCoN,pancakes)", "bacon", isValid => {
         _assert.strictEqual(true, isValid);
       });
 
-      _tean.object("string(bacon,pancakes)", "waffles", isValid => { // no waffles! :*(
+      _tean.normalize("string(bacon,pancakes)", "waffles", isValid => { // no waffles! :*(
         _assert.strictEqual(false, isValid);
       });
     });
     it("should allow default values for string", () => {
-      _tean.object("string=hello", undefined, (isValid, result) => {
+      _tean.normalize("string=hello", undefined, (isValid, result) => {
         _assert.strictEqual(true, isValid);
         _assert.strictEqual("hello", result);
       });
-      _tean.object("string(pancakes,waffles)=", "", (isValid, result) => {
+      _tean.normalize("string(pancakes,waffles)=", "", (isValid, result) => {
         _assert.strictEqual(true, isValid);
         _assert.strictEqual("", result);
       });
@@ -298,13 +293,13 @@ describe("tean", () => {
     });
 
     it("should validate an empty map", () => {
-      _tean.object({}, {}, isValid => {
+      _tean.normalize({}, {}, isValid => {
         _assert.strictEqual(true, isValid);
       });
     });
 
     it("should validate a complex map", () => {
-      _tean.object({
+      _tean.normalize({
         duration: "int(0)=3600",
         wakeUpTime: "int(0)",
         meal: "string(breakfast,lunch,dinner)",
@@ -322,7 +317,7 @@ describe("tean", () => {
     });
 
     it("should fail a complex map with invalid params", () => {
-      _tean.object({
+      _tean.normalize({
         duration: "int(0)=3600",
         wakeUpTime: "int(0)",
         meal: "string(breakfast,lunch,dinner)",
@@ -340,7 +335,7 @@ describe("tean", () => {
     });
 
     it("should fail a complex map with missing params", () => {
-      _tean.object({
+      _tean.normalize({
         user: {
           id: "int(1)",
           name: "string",
@@ -356,7 +351,7 @@ describe("tean", () => {
 
     it("should replace undefined params with defaults where available", () => {
       const patron = {};
-      _tean.object({
+      _tean.normalize({
         id: "int=1",
         email: "email=bacon@breakfast.com",
         foodIdPreferences: ["int(0)", "=[]"],
@@ -371,7 +366,7 @@ describe("tean", () => {
 
     it("should not mutate any values passed into the function", () => {
       const patron = {};
-      _tean.object({
+      _tean.normalize({
         id: "int=1",
         email: "email=bacon@breakfast.com",
         foodIdPreferences: ["int(0)", "=[]"],
@@ -383,7 +378,7 @@ describe("tean", () => {
 
     it("should delete unexpected properties", () => {
       const patron = {id: 1, breakfast: "waffles"};
-      _tean.object({
+      _tean.normalize({
         id: "int",
       }, patron, (isValid, safeData) => {
         _assert.strictEqual(true, isValid);
@@ -396,52 +391,52 @@ describe("tean", () => {
       this.timeout(2000);
       _async.parallel([
         parallel => {
-          _tean.object("breakfastUid", "waffle", isValid => {
+          _tean.normalize("breakfastUid", "waffle", isValid => {
             _assert.strictEqual(true, isValid);
             parallel(null);
           });
         },
         parallel => {
-          _tean.object("breakfastUid", "cereal", isValid => {
+          _tean.normalize("breakfastUid", "cereal", isValid => {
             _assert.strictEqual(true, isValid);
             parallel(null);
           });
         },
         parallel => {
-          _tean.object("breakfastUid", 0, isValid => {
+          _tean.normalize("breakfastUid", 0, isValid => {
             _assert.strictEqual(true, isValid);
             parallel(null);
           });
         },
         parallel => {
-          _tean.object("breakfastUid", -1, isValid => {
+          _tean.normalize("breakfastUid", -1, isValid => {
             _assert.strictEqual(false, isValid);
             parallel(null);
           });
         },
         parallel => {
-          _tean.object("breakfastUid", "steak", isValid => {
+          _tean.normalize("breakfastUid", "steak", isValid => {
             _assert.strictEqual(false, isValid);
             parallel(null);
           });
         },
         parallel => {
           const data = {buid: "waffle"};
-          _tean.object({buid: "breakfastUid"}, data, (isValid, safeData) => {
+          _tean.normalize({buid: "breakfastUid"}, data, (isValid, safeData) => {
             _assert.strictEqual(0, safeData.buid);
             parallel(null);
           });
         },
         parallel => {
           const data = {buid: "pancake"};
-          _tean.object({buid: "breakfastUid"}, data, (isValid, safeData) => {
+          _tean.normalize({buid: "breakfastUid"}, data, (isValid, safeData) => {
             _assert.strictEqual(1, safeData.buid);
             parallel(null);
           });
         },
         parallel => {
           const data = {buid: 1};
-          _tean.object({buid: "breakfastUid"}, data, (isValid, safeData) => {
+          _tean.normalize({buid: "breakfastUid"}, data, (isValid, safeData) => {
             _assert.strictEqual(1, safeData.buid);
             parallel(null);
           });
@@ -453,18 +448,18 @@ describe("tean", () => {
 
     it("should allow null for array default value", () => {
       const data = {};
-      _tean.object({foodIds: ["int(0)", "!null"]}, data, (isValid, result) => {
+      _tean.normalize({foodIds: ["int(0)", "!null"]}, data, (isValid, result) => {
         _assert.strictEqual(true, isValid);
         _assert.strictEqual(null, result.foodIds);
       });
-      _tean.object({foodIds: ["int(0)", "!null"]}, {foodIds: [1, 2, 3]}, isValid => {
+      _tean.normalize({foodIds: ["int(0)", "!null"]}, {foodIds: [1, 2, 3]}, isValid => {
         _assert.strictEqual(true, isValid);
       });
     });
 
     it("should allow optional objects as params", () => {
       const breakfastOrder = {pancakes: {amount: 1, buttered: true}, cereal: {amount: 1}};
-      _tean.object({
+      _tean.normalize({
         pancakes: {"!null": {amount: "int(0)", buttered: "bool"}},
         bacon: {"!null": {amount: "int(0)", buttered: "bool"}},
         toast: {"={\"amount\": 2, \"buttered\": true}": {amount: "int(0)", buttered: "bool"}},
@@ -481,9 +476,9 @@ describe("tean", () => {
     });
 
     it("should validate and populate array of objects", () => {
-      _tean.object({
+      _tean.normalize({
         waffles: [{
-          name: "string",
+          name: "string(20)",
           whippedCream: "bool=true",
           syrup: "bool",
           strawberries: "bool",
@@ -506,7 +501,7 @@ describe("tean", () => {
     });
 
     it("should fail empty array of objects", () => {
-      _tean.object({
+      _tean.normalize({
         waffles: [{
           name: "string",
           whippedCream: "bool=true",
@@ -522,28 +517,28 @@ describe("tean", () => {
     });
 
     it("should allow null for default value", () => {
-      _tean.object("string!null", undefined, (isValid, result) => {
+      _tean.normalize("string!null", undefined, (isValid, result) => {
         _assert.strictEqual(true, isValid);
         _assert.strictEqual(null, result);
       });
     });
 
     it("should reject null if not explicitly defined as default", () => {
-      _tean.object("string=pancakes", null, (isValid, result) => {
+      _tean.normalize("string(20)=pancakes", null, (isValid, result) => {
         _assert.strictEqual(false, isValid);
         _assert.strictEqual("(null) is not a string", result.toString());
       });
     });
 
     it("should allow undefined for default value", () => {
-      _tean.object("string!undefined", undefined, (isValid, result) => {
+      _tean.normalize("string(20)!undefined", undefined, (isValid, result) => {
         _assert.strictEqual(true, isValid);
         _assert.strictEqual(undefined, result);
       });
     });
 
     it("should strip property when default is undefined", () => {
-      _tean.object({
+      _tean.normalize({
         strawberries: "bool",
         syrup: "bool!undefined",
       }, {
@@ -557,18 +552,21 @@ describe("tean", () => {
     });
 
     it("should provide a map of failure messages for failed validation", () => {
-      _tean.object({
+      _tean.normalize({
         cereal: {milk: "bool", sugar: "bool=true"},
         recipient: "email",
         puzzleCode: ["int"],
         sideDishes: [{
           id: "int",
-          name: "string",
+          name: "string(20)",
         }],
       }, {
         cereal: {milk: false},
         puzzleCode: [1, "b", 3],
-        sideDishes: [{id: 1, name: "grits"}, {id: "a", name: "sausage links"}],
+        sideDishes: [
+          {id: 1, name: "grits"},
+          {id: "a", name: "sausage links"},
+        ],
       }, (isValid, result) => {
         _assert.strictEqual(false, isValid);
         _assert.strictEqual(3, result.length);
@@ -577,6 +575,20 @@ describe("tean", () => {
         _assert.strictEqual(0, result[2].indexOf("sideDishes.1.id"));
       });
     });
+
+    it("should validate/normalize and fulfill promise", () => {
+      return _tean.normalize(
+        {lovesWaffles: "bool", hungerLevel: "int(0, 10)"},
+        {lovesWaffles: true, hungerLevel: 5}
+      );
+    });
+    // TODO: make sure promises are rejecting correctly
+    // it("should reject promise and return errors", () => {
+    //   return _tean.normalize(
+    //     {lovesWaffles: "bool", hungerLevel: "int(0, 10)"},
+    //     {lovesWaffles: "yeah I do", hungerLevel: -5}
+    //   );
+    // });
   });
 
   describe("#json()", () => {
@@ -591,6 +603,16 @@ describe("tean", () => {
         _assert.strictEqual(true, parsedBody.lovesWaffles);
       });
     });
+    it("should validate json and fulfill promise", () => {
+      return _tean.json({lovesWaffles: "bool", hungerLevel: "int(0, 10)"}, "{\"lovesWaffles\":true, \"hungerLevel\": 8}");
+    });
+    // TODO: make sure promises are rejecting correctly
+    // it("should reject promise and return errors", () => {
+    //   return _tean.json(
+    //     {lovesWaffles: "bool", hungerLevel: "int(0, 10)"},
+    //     "{\"lovesWaffles\"true, \"hungerLevel\": 8}"
+    //   );
+    // });
   });
 
   describe("#expressRequest()", () => {
