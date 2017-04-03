@@ -169,14 +169,13 @@ exports.normalize = function(entryMap, entryData, callback = null) {
           }
           else {
             let elementFailed = false;
-            _async.each(data, (datum, each) => {
-              const index = data.indexOf(datum);
+            _async.eachOf(data, (datum, index, eachOf) => {
               // TODO: don't use dot notation for array indices
               validate(map[0], datum, `${path}.${index}`, isValid => {
                 if (!isValid) {
                   elementFailed = true;
                 }
-                each(null);
+                eachOf(null);
               });
             }, () => {
               if (elementFailed) {

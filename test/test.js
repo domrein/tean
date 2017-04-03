@@ -16,25 +16,26 @@ describe("tean", () => {
     it("should allow adding a custom type", () => {
       // accepts breakfast strings and ids and converts strings to ids
       _tean.addType("breakfastUid", (value, args, callback) => {
-        _tean.normalize("int(0)", value, (isValid, result) => {
-          if (isValid) {
-            callback(true, result);
+        setTimeout(() => {
+          switch (`${value}`.trim()) {
+            case "0":
+            case "waffle":
+              callback(true, {id: 0, name: "waffle"});
+              break;
+            case "1":
+            case "pancake":
+              callback(true, {id: 1, name: "pancake"});
+              break;
+            case "2":
+            case "cereal":
+              callback(true, {id: 2, name: "cereal"});
+              break;
+            default:
+              callback(false, "not a valid name/id");
+              break;
           }
-          else {
-            if (typeof value === "string") {
-              switch (value) {
-                case "waffle": setTimeout(() => callback(true, 0), Math.random() * 100); break;
-                case "pancake": setTimeout(() => callback(true, 1), Math.random() * 100); break;
-                case "cereal": setTimeout(() => callback(true, 2), Math.random() * 100); break;
-                default: callback(false, "not a recognized name");
-              }
-            }
-            else {
-              callback(false, "not a valid breakfastUid name");
-            }
-          }
-        });
-      }, defaultValue => parseInt(defaultValue));
+        }, Math.random() * 200);
+      });
     });
   });
 
@@ -387,57 +388,90 @@ describe("tean", () => {
       });
     });
 
-    it("should validate and transform custom types", done => {
+    it("should validate and normalize custom types", done => {
       this.timeout(2000);
       _async.parallel([
         parallel => {
-          _tean.normalize("breakfastUid", "waffle", isValid => {
+          _tean.normalize("breakfastUid", "waffle", (isValid, safeData) => {
             _assert.strictEqual(true, isValid);
+            _assert.strictEqual(0, safeData.id);
+            _assert.strictEqual("waffle", safeData.name);
             parallel(null);
           });
         },
         parallel => {
-          _tean.normalize("breakfastUid", "cereal", isValid => {
+          _tean.normalize("breakfastUid", "cereal", (isValid, safeData) => {
             _assert.strictEqual(true, isValid);
+            _assert.strictEqual(2, safeData.id);
+            _assert.strictEqual("cereal", safeData.name);
             parallel(null);
           });
         },
         parallel => {
-          _tean.normalize("breakfastUid", 0, isValid => {
+          _tean.normalize("breakfastUid", 0, (isValid, safeData) => {
             _assert.strictEqual(true, isValid);
+            _assert.strictEqual(0, safeData.id);
+            _assert.strictEqual("waffle", safeData.name);
             parallel(null);
           });
         },
         parallel => {
-          _tean.normalize("breakfastUid", -1, isValid => {
+          _tean.normalize("breakfastUid", -1, (isValid, safeData) => {
             _assert.strictEqual(false, isValid);
+            _assert.strictEqual(true, Array.isArray(safeData));
             parallel(null);
           });
         },
         parallel => {
-          _tean.normalize("breakfastUid", "steak", isValid => {
+          _tean.normalize("breakfastUid", "steak", (isValid, safeData) => {
             _assert.strictEqual(false, isValid);
+            _assert.strictEqual(true, Array.isArray(safeData));
             parallel(null);
           });
         },
         parallel => {
           const data = {buid: "waffle"};
           _tean.normalize({buid: "breakfastUid"}, data, (isValid, safeData) => {
-            _assert.strictEqual(0, safeData.buid);
+            _assert.strictEqual(0, safeData.buid.id);
+            _assert.strictEqual("waffle", safeData.buid.name);
             parallel(null);
           });
         },
         parallel => {
           const data = {buid: "pancake"};
           _tean.normalize({buid: "breakfastUid"}, data, (isValid, safeData) => {
-            _assert.strictEqual(1, safeData.buid);
+            _assert.strictEqual(1, safeData.buid.id);
+            _assert.strictEqual("pancake", safeData.buid.name);
             parallel(null);
           });
         },
         parallel => {
           const data = {buid: 1};
           _tean.normalize({buid: "breakfastUid"}, data, (isValid, safeData) => {
-            _assert.strictEqual(1, safeData.buid);
+            _assert.strictEqual(1, safeData.buid.id);
+            _assert.strictEqual("pancake", safeData.buid.name);
+            parallel(null);
+          });
+        },
+        parallel => {
+          const data = {breakfasts: [
+            "waffle",
+            "waffle",
+            "pancake",
+            "cereal",
+            "0",
+            "1",
+            "2",
+            0,
+            1,
+            2,
+          ]};
+          _tean.normalize({breakfasts: ["breakfastUid"]}, data, (isValid, safeData) => {
+            _assert.strictEqual(true, isValid);
+            for (const breakfast of safeData.breakfasts) {
+              _assert.strictEqual(true, breakfast.hasOwnProperty("id"));
+              _assert.strictEqual(true, breakfast.hasOwnProperty("name"));
+            }
             parallel(null);
           });
         },
