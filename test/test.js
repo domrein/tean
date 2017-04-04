@@ -259,12 +259,14 @@ describe("tean", () => {
         _assert.strictEqual(true, isValid);
       });
 
-      // string args are case insensitive
-      _tean.normalize("string(bacon,pancakes)", "PaNcakEs", isValid => {
+      // string args are case insensitive and normalize to argument casing
+      _tean.normalize("string(bacon,pancakes)", "PaNcakEs", (isValid, result) => {
         _assert.strictEqual(true, isValid);
+        _assert.strictEqual("pancakes", result);
       });
-      _tean.normalize("string(baCoN,pancakes)", "bacon", isValid => {
+      _tean.normalize("string(baCoN,pancakes)", "bacon", (isValid, result) => {
         _assert.strictEqual(true, isValid);
+        _assert.strictEqual("baCoN", result);
       });
 
       _tean.normalize("string(bacon,pancakes)", "waffles", isValid => { // no waffles! :*(

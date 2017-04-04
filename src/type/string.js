@@ -14,15 +14,16 @@ module.exports = {
       return;
     }
 
-    args = args.map(arg => arg.toLowerCase());
+    const lcArgs = args.map(arg => arg.toLowerCase());
 
     const maxLength = Number.parseInt(args[0]);
     if (args.length > 1 || Number.isNaN(maxLength)) {
-      if (!args.includes(value.toLowerCase())) {
+      const index = lcArgs.indexOf(value.toLowerCase());
+      if (index === -1) {
         callback(false, `not in list of accepted constants (${args.join(", ")})`);
         return;
       }
-      callback(true, value.toLowerCase());
+      callback(true, args[index]);
     }
     else {
       if (value.length > maxLength) {
