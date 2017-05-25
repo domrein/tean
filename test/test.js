@@ -511,6 +511,15 @@ describe("tean", () => {
       });
     });
 
+    it("should normalize array of simple types", () => {
+      _tean.normalize(["int"], ["1", 2, "3"], (isValid, result) => {
+        _assert.strictEqual(true, isValid);
+        _assert.strictEqual(result[0], 1);
+        _assert.strictEqual(result[1], 2);
+        _assert.strictEqual(result[2], 3);
+      });
+    });
+
     it("should validate and populate array of objects", () => {
       _tean.normalize({
         waffles: [{

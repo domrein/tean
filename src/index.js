@@ -102,6 +102,10 @@ const setByPath = (target, path, value) => {
   const keys = path.split(".");
   for (let i = 0; i < keys.length; i++) {
     const key = keys[i];
+    // skip if we're at root of array
+    if (!key) {
+      continue;
+    }
     if (i === keys.length - 1) {
       target[key] = value;
     }
