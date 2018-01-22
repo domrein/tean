@@ -24,9 +24,7 @@
     "url": "https://github.com/domrein/tean/issues"
   },
   "homepage": "https://github.com/domrein/tean",
-  "dependencies": {
-    "async": "^2.1.4"
-  },
+  "dependencies": {},
   "devDependencies": {
     "mocha": "^3.2.0"
   }
