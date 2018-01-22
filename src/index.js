@@ -4,8 +4,6 @@
 
 "use strict";
 
-const _async = require("async");
-
 exports.requestLogFunction = null;
 exports.failureLogFunction = null;
 exports.failureReplyFunction = null;
@@ -129,100 +127,184 @@ const parseDefault = key => {
 // parent and prop are here so we can save off default values
 exports.normalize = function(entryMap, entryData, callback = null) {
   return new Promise((resolve, reject) => {
-    const failureMessages = [];
     // clone data so we don't overwrite original values
     if (typeof entryData === "object") {
       entryData = JSON.parse(JSON.stringify(entryData));
     }
 
-    const validate = (map, data, path, callback) => {
-      // if map is an array, move to enclosed item
-      if (Array.isArray(map)) {
-        // if map is empty array (why would you do this?)
-        if (map.length === 0) {
-          if (Array.isArray(data) && data.length === 0) {
-            callback(true);
-          }
-          else if (Array.isArray(data) && data.length !== 0) {
-            failureMessages.push(`${path}${path ? "." : ""} (${typeof data === "object" ? JSON.stringify(data) : data}) is not empty`);
-            callback(false);
-          }
-          else {
-            failureMessages.push(`${path}${path ? "." : ""} (${typeof data === "object" ? JSON.stringify(data) : data}) is missing`);
-            callback(false);
-          }
-        }
-        // if array is required but has no data
-        else if (map.length === 1 && (!data || !data.length)) {
-          failureMessages.push(`${path}${path ? "." : ""} (${typeof data === "object" ? JSON.stringify(data) : data}) is empty`);
-          callback(false);
-        }
-        // if array has data or defaults are available
-        else if ((data === undefined && map.length === 2) || Array.isArray(data)) {
-          let defaultString = null;
-          if (data === undefined && map.length === 2) {
-            defaultString = map[1].substr(1);
-            data = JSON.parse(defaultString);
-            // save off default
-            if (path) {
-              setByPath(entryData, path, data);
+    const validate = (map, data, path) => {
+      return new Promise(async (resolve, reject) => {
+        // if map is an array, move to enclosed item
+        if (Array.isArray(map)) {
+          // if map is empty array (why would you do this?)
+          if (map.length === 0) {
+            if (Array.isArray(data) && data.length === 0) {
+              resolve(true);
+            }
+            else if (Array.isArray(data) && data.length !== 0) {
+              reject(`${path}${path ? "." : ""} (${typeof data === "object" ? JSON.stringify(data) : data}) is not empty`);
+            }
+            else {
+              reject(`${path}${path ? "." : ""} (${typeof data === "object" ? JSON.stringify(data) : data}) is missing`);
             }
           }
-          if (defaultString === "null") {
-            callback(true);
+          // if array is required but has no data
+          else if (map.length === 1 && (!data || !data.length)) {
+            reject(`${path}${path ? "." : ""} (${typeof data === "object" ? JSON.stringify(data) : data}) is empty`);
+          }
+          // if array has data or defaults are available
+          else if ((data === undefined && map.length === 2) || Array.isArray(data)) {
+            let defaultString = null;
+            if (data === undefined && map.length === 2) {
+              defaultString = map[1].substr(1);
+              data = JSON.parse(defaultString);
+              // save off default
+              if (path) {
+                setByPath(entryData, path, data);
+              }
+            }
+            if (defaultString === "null") {
+              resolve(true);
+            }
+            else {
+              try {
+                for (const datum of data) {
+                  const index = data.indexOf(datum);
+                  // TODO: don't use dot notation for array indices
+                  await validate(map[0], datum, `${path}.${index}`);
+                }
+                resolve(true);
+              }
+              catch (err) {
+                reject(err);
+              }
+            }
           }
           else {
-            let elementFailed = false;
-            _async.eachOf(data, (datum, index, eachOf) => {
-              // TODO: don't use dot notation for array indices
-              validate(map[0], datum, `${path}.${index}`, isValid => {
-                if (!isValid) {
-                  elementFailed = true;
-                }
-                eachOf(null);
-              });
-            }, () => {
-              if (elementFailed) {
-                callback(false);
+            reject(`${path}${path ? "." : ""} (${typeof data === "object" ? JSON.stringify(data) : data}) is not a valid array`);
+          }
+        }
+        // if map is an object, loop over properties
+        else if (typeof map === "object") {
+          const mapKeys = Object.keys(map);
+
+          // if data isn't an object
+          if (data !== undefined && (typeof data !== "object" || Array.isArray(data))) {
+            reject(`${path}${path ? "." : ""} (${typeof data === "object" ? JSON.stringify(data) : data}) is not an object`);
+          }
+          // optional object param
+          else if (mapKeys.length === 1 && (mapKeys[0].startsWith("=") || mapKeys[0].startsWith("!"))) {
+            const defaults = parseDefault(mapKeys[0]);
+
+            // should we apply a default?
+            if (defaults && (
+              data === undefined ||
+              (data === null && defaults.type === "!" && defaults.value === "null") ||
+              data.toString() === defaults.value
+            )) {
+              if (data === undefined && defaults.type === "=") {
+                data = JSON.parse(defaults.value);
               }
               else {
-                callback(true);
+                data = defaults.value === "null" ? null : undefined;
               }
-            });
+
+              if (path) {
+                if (data !== undefined) {
+                  setByPath(entryData, path, data);
+                }
+              }
+              else {
+                entryData = data;
+              }
+              resolve(true);
+            }
+            else {
+              try {
+                await validate(map[mapKeys[0]], data, `${path}`);
+                resolve(true);
+              }
+              catch (err) {
+                reject(err);
+              }
+            }
+          }
+          // required object param
+          else {
+            if (data === undefined) {
+              reject(`${path} (${typeof data === "object" ? JSON.stringify(data) : data}) is required but missing`);
+            }
+            else {
+              // delete unexpected keys
+              if (typeof data === "object" && !Array.isArray(data) && data) {
+                for (const dataKey of Object.keys(data)) {
+                  if (!mapKeys.includes(dataKey)) {
+                    delete data[dataKey];
+                  }
+                }
+              }
+              // validate all keys
+              const failures = [];
+              for (const key of mapKeys) {
+                if (data === null || data === undefined) {
+                  failures.push(`${path}.${key} (${typeof data === "object" ? JSON.stringify(data) : data}) is missing`);
+                }
+                else {
+                  try {
+                    await validate(map[key], data[key], `${path}${path ? "." : ""}${key}`);
+                  }
+                  catch (err) {
+                    failures.push(err);
+                  }
+                }
+              }
+              if (failures.length === 0) {
+                resolve(true);
+              }
+              else if (failures.length > 1) {
+                reject(failures);
+              }
+              else {
+                reject(failures[0]);
+              }
+            }
           }
         }
         else {
-          failureMessages.push(`${path}${path ? "." : ""} (${typeof data === "object" ? JSON.stringify(data) : data}) is not a valid array`);
-          callback(false);
-        }
-      }
-      // if map is an object, loop over properties
-      else if (typeof map === "object") {
-        const mapKeys = Object.keys(map);
-
-        // if data isn't an object
-        if (data !== undefined && (typeof data !== "object" || Array.isArray(data))) {
-          failureMessages.push(`${path}${path ? "." : ""} (${typeof data === "object" ? JSON.stringify(data) : data}) is not an object`);
-          callback(false);
-        }
-        // optional object param
-        else if (mapKeys.length === 1 && (mapKeys[0].startsWith("=") || mapKeys[0].startsWith("!"))) {
-          const defaults = parseDefault(mapKeys[0]);
+          // find type
+          const type = /^[^(=!]*/.exec(map)[0];
+          if (!typeValidators.hasOwnProperty(type)) {
+            throw new Error(`Nonexistant type (${type}) specified. Valid types are: ${Object.keys(typeValidators).join(", ")}`);
+          }
+          // find args
+          let args = /\(.*\)/.exec(map);
+          if (args) {
+            args = args[0].substr(1, args[0].length - 2).split(/\s*,\s*/);
+          }
+          // find default
+          const defaults = parseDefault(map);
 
           // should we apply a default?
           if (defaults && (
             data === undefined ||
             (data === null && defaults.type === "!" && defaults.value === "null") ||
-            data.toString() === defaults.value
+            (data !== null && data.toString() === defaults.value)
           )) {
-            if (data === undefined && defaults.type === "=") {
-              data = JSON.parse(defaults.value);
+            if (defaults.type === "=") {
+              if (typeValidators[type].formatDefault) {
+                data = typeValidators[type].formatDefault(defaults.value);
+              }
+              else {
+                data = defaults.value;
+              }
             }
             else {
               data = defaults.value === "null" ? null : undefined;
             }
 
+            // save off default value
             if (path) {
+              // don't write out undefined values
               if (data !== undefined) {
                 setByPath(entryData, path, data);
               }
@@ -230,124 +312,37 @@ exports.normalize = function(entryMap, entryData, callback = null) {
             else {
               entryData = data;
             }
-            callback(true);
+            resolve(true);
           }
           else {
-            validate(map[mapKeys[0]], data, `${path}`, callback);
-          }
-        }
-        // required object param
-        else {
-          if (data === undefined) {
-            failureMessages.push(`${path} (${typeof data === "object" ? JSON.stringify(data) : data}) is required but missing`);
-            callback(false);
-          }
-          else {
-            // delete unexpected keys
-            if (typeof data === "object" && !Array.isArray(data) && data) {
-              for (const dataKey of Object.keys(data)) {
-                if (!mapKeys.includes(dataKey)) {
-                  delete data[dataKey];
-                }
-              }
-            }
-            // validate all keys
-            let keyFailed = false;
-            _async.each(mapKeys, (key, each) => {
-              if (data === null || data === undefined) {
-                keyFailed = true;
-                failureMessages.push(`${path}.${key} (${typeof data === "object" ? JSON.stringify(data) : data}) is missing`);
-                each(null);
-              }
-              else {
-                validate(map[key], data[key], `${path}${path ? "." : ""}${key}`, isValid => {
-                  if (!isValid) {
-                    keyFailed = true;
+            typeValidators[type].validate(data, args, (isValid, result) => {
+              if (isValid) {
+                if (result !== undefined) {
+                  if (path) {
+                    setByPath(entryData, path, result);
                   }
-                  each(null);
-                });
-              }
-            }, () => {
-              if (keyFailed) {
-                callback(false);
+                  else {
+                    entryData = result;
+                  }
+                }
+                resolve(true);
               }
               else {
-                callback(true);
+                reject(`${path}${path ? " " : ""}(${typeof data === "object" ? JSON.stringify(data) : data}) is ${result}`);
               }
             });
           }
         }
-      }
-      else {
-        // find type
-        const type = /^[^(=!]*/.exec(map)[0];
-        if (!typeValidators.hasOwnProperty(type)) {
-          throw new Error(`Nonexistant type (${type}) specified. Valid types are: ${Object.keys(typeValidators).join(", ")}`);
-        }
-        // find args
-        let args = /\(.*\)/.exec(map);
-        if (args) {
-          args = args[0].substr(1, args[0].length - 2).split(/\s*,\s*/);
-        }
-        // find default
-        const defaults = parseDefault(map);
-
-        // should we apply a default?
-        if (defaults && (
-          data === undefined ||
-          (data === null && defaults.type === "!" && defaults.value === "null") ||
-          (data !== null && data.toString() === defaults.value)
-        )) {
-          if (defaults.type === "=") {
-            if (typeValidators[type].formatDefault) {
-              data = typeValidators[type].formatDefault(defaults.value);
-            }
-            else {
-              data = defaults.value;
-            }
-          }
-          else {
-            data = defaults.value === "null" ? null : undefined;
-          }
-
-          // save off default value
-          if (path) {
-            // don't write out undefined values
-            if (data !== undefined) {
-              setByPath(entryData, path, data);
-            }
-          }
-          else {
-            entryData = data;
-          }
-          callback(true);
-        }
-        else {
-          typeValidators[type].validate(data, args, (isValid, result) => {
-            if (isValid && result !== undefined) {
-              if (path) {
-                setByPath(entryData, path, result);
-              }
-              else {
-                entryData = result;
-              }
-            }
-            else if (!isValid) {
-              failureMessages.push(`${path}${path ? " " : ""}(${typeof data === "object" ? JSON.stringify(data) : data}) is ${result}`);
-            }
-            callback(isValid);
-          });
-        }
-      }
+      });
     };
 
-    validate(entryMap, entryData, "", isValid => {
-      if (isValid) {
-        callback ? callback(isValid, entryData) : resolve(entryData);
+    validate(entryMap, entryData, "").then(() => {
+      callback ? callback(true, entryData) : resolve(entryData);
+    }).catch(err => {
+      if (typeof err === "string") {
+        err = [err];
       }
-      else {
-        callback ? callback(isValid, failureMessages) : reject(failureMessages);
-      }
+      callback ? callback(false, err) : reject(err);
     });
   });
 };
