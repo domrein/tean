@@ -168,11 +168,10 @@ exports.normalize = function(entryMap, entryData, callback = null) {
             }
             else {
               try {
-                for (const datum of data) {
-                  const index = data.indexOf(datum);
+                await Promise.all(data.map((datum, index) => {
                   // TODO: don't use dot notation for array indices
-                  await validate(map[0], datum, `${path}.${index}`);
-                }
+                  return validate(map[0], datum, `${path}.${index}`);
+                }));
                 resolve(true);
               }
               catch (err) {
@@ -245,19 +244,23 @@ exports.normalize = function(entryMap, entryData, callback = null) {
               }
               // validate all keys
               const failures = [];
-              for (const key of mapKeys) {
-                if (data === null || data === undefined) {
-                  failures.push(`${path}.${key} (${typeof data === "object" ? JSON.stringify(data) : data}) is missing`);
-                }
-                else {
-                  try {
-                    await validate(map[key], data[key], `${path}${path ? "." : ""}${key}`);
+              await Promise.all(mapKeys.map((key, index) => {
+                return new Promise(async (resolve, reject) => {
+                  if (data === null || data === undefined) {
+                    failures.push(`${path}.${key} (${typeof data === "object" ? JSON.stringify(data) : data}) is missing`);
+                    resolve();
                   }
-                  catch (err) {
-                    failures.push(err);
+                  else {
+                    try {
+                      await validate(map[key], data[key], `${path}${path ? "." : ""}${key}`);
+                    }
+                    catch (err) {
+                      failures.push(err);
+                    }
+                    resolve();
                   }
-                }
-              }
+                });
+              }));
               if (failures.length === 0) {
                 resolve(true);
               }
