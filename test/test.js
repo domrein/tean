@@ -1,9 +1,12 @@
 "use strict";
 
 const _assert = require("assert");
-const _async = require("async");
 
 const _tean = require("../src/index.js");
+
+process.on("unhandledRejection", err => {
+  console.log(`Unhandled rejection: ${err.stack || err.error.stack}`);
+});
 
 describe("tean", () => {
   describe("#addBaseTypes()", () => {
@@ -82,7 +85,7 @@ describe("tean", () => {
     ];
 
     const testType = function(type, validValues, expectedResult) {
-      let testValues;
+      let testValues = null;
       if (!expectedResult) {
         testValues = values.filter(value => {
           let isValid = false;
@@ -392,70 +395,70 @@ describe("tean", () => {
 
     it("should validate and normalize custom types", done => {
       this.timeout(2000);
-      _async.parallel([
-        parallel => {
+      Promise.all([
+        new Promise((resolve, reject) => {
           _tean.normalize("breakfastUid", "waffle", (isValid, safeData) => {
             _assert.strictEqual(true, isValid);
             _assert.strictEqual(0, safeData.id);
             _assert.strictEqual("waffle", safeData.name);
-            parallel(null);
+            resolve();
           });
-        },
-        parallel => {
+        }),
+        new Promise((resolve, reject) => {
           _tean.normalize("breakfastUid", "cereal", (isValid, safeData) => {
             _assert.strictEqual(true, isValid);
             _assert.strictEqual(2, safeData.id);
             _assert.strictEqual("cereal", safeData.name);
-            parallel(null);
+            resolve();
           });
-        },
-        parallel => {
+        }),
+        new Promise((resolve, reject) => {
           _tean.normalize("breakfastUid", 0, (isValid, safeData) => {
             _assert.strictEqual(true, isValid);
             _assert.strictEqual(0, safeData.id);
             _assert.strictEqual("waffle", safeData.name);
-            parallel(null);
+            resolve();
           });
-        },
-        parallel => {
+        }),
+        new Promise((resolve, reject) => {
           _tean.normalize("breakfastUid", -1, (isValid, safeData) => {
             _assert.strictEqual(false, isValid);
             _assert.strictEqual(true, Array.isArray(safeData));
-            parallel(null);
+            resolve();
           });
-        },
-        parallel => {
+        }),
+        new Promise((resolve, reject) => {
           _tean.normalize("breakfastUid", "steak", (isValid, safeData) => {
             _assert.strictEqual(false, isValid);
             _assert.strictEqual(true, Array.isArray(safeData));
-            parallel(null);
+            resolve();
           });
-        },
-        parallel => {
+        }),
+        new Promise((resolve, reject) => {
           const data = {buid: "waffle"};
           _tean.normalize({buid: "breakfastUid"}, data, (isValid, safeData) => {
             _assert.strictEqual(0, safeData.buid.id);
             _assert.strictEqual("waffle", safeData.buid.name);
-            parallel(null);
+            resolve();
           });
-        },
-        parallel => {
+        }),
+        new Promise((resolve, reject) => {
           const data = {buid: "pancake"};
           _tean.normalize({buid: "breakfastUid"}, data, (isValid, safeData) => {
             _assert.strictEqual(1, safeData.buid.id);
             _assert.strictEqual("pancake", safeData.buid.name);
-            parallel(null);
+            resolve();
           });
-        },
-        parallel => {
+        }),
+        new Promise((resolve, reject) => {
           const data = {buid: 1};
           _tean.normalize({buid: "breakfastUid"}, data, (isValid, safeData) => {
             _assert.strictEqual(1, safeData.buid.id);
             _assert.strictEqual("pancake", safeData.buid.name);
-            parallel(null);
+            resolve();
           });
-        },
-        parallel => {
+        }),
+        new Promise((resolve, reject) => {
           const data = {breakfasts: [
             "waffle",
             "waffle",
@@ -474,12 +477,10 @@ describe("tean", () => {
               _assert.strictEqual(true, breakfast.hasOwnProperty("id"));
               _assert.strictEqual(true, breakfast.hasOwnProperty("name"));
             }
-            parallel(null);
+            resolve();
           });
-        },
-      ], err => {
-        done();
-      });
+        }),
+      ]).then(() => done());
     });
 
     it("should allow null for array default value", () => {
